@@ -26,7 +26,6 @@ def createWordAndHashtagFiles():
         for hashtag in hashtaglist:
             f.write('{0}\n'.format(hashtag))
               
-              
 def testReadWordsFromFile():
     testwordlist = ['moon', 'man', 'over', 'the', 'help', 'me',
                  't', 'fi']
@@ -46,7 +45,7 @@ def testReadWordsFromFile():
     wordlist = DeterministicSegmenter.readWordsFromFile('testwordlist.txt', True, 2)
     assertion(len(wordlist) == 2, "Word list should be size 2.")
     
-def testMaxMatchAlgo():
+def initialTestMaxMatchAlgo():
     testwordlist = ['moon', 'man', 'over', 'the', 'help', 'me',
                  't', 'fi']
     testhashtaglist = ['manoverthemoon', 'helpmeoverthere', 'findmefood', 'whaaaaat']
@@ -69,10 +68,35 @@ def testMaxMatchAlgo():
             maxmatchedHashtag = DeterministicSegmenter.maxMatch("findmefood", testwordlist, maxmatchedHashtag)
             assertion(maxmatchedHashtag == "fi ndmefood", "findmefood should be changed to fi ndmefood.")
             
-def main():
-    testReadWordsFromFile()
-    testMaxMatchAlgo()
+def finalTestMaxMatchAlgo():
+    #retrieve the wordlist and hashtag list form the file system
+    wordlist = DeterministicSegmenter.readWordsFromFile('bigwordlist.txt', True, 75000)
+    hashtags = DeterministicSegmenter.readWordsFromFile('hashtags-train.txt', False, 0)
     
+    #use the maxmatch algo and change the hashtags and add them to a list
+    maxmatchHashtags = []
+    for hashtag in hashtags:
+        maxmatchHashtags.append(DeterministicSegmenter.maxMatch(hashtag, wordlist, ""))
+        
+    #get the hashtags of the expected output of the maxmatch algo from professor's provided file
+    expectedHashtags = []
+    with open('hashtags-train-maxmatch.txt', 'r') as f:
+        for line in f:
+            #strip off whitespace characters like newlines
+            expectedHashtags.append(line.strip())
+    
+    #compare the hashtags created by the maxmatch algo to those provided by the professor
+    for maxmatchHashtag, expectedmaxmatchHashtag in zip(maxmatchHashtags, expectedHashtags):
+        assertion(maxmatchHashtag == expectedmaxmatchHashtag, "My maxmatch algo hashtag: {0} should be the same as the professor's maxmatch algo: {1}.".format(maxmatchHashtag, expectedmaxmatchHashtag))
+            
+def testMinEditDistanceAlgo():   
+    #TODO
+    pass
+    
+def main():
+    #testReadWordsFromFile()
+    #initialTestMaxMatchAlgo()
+    finalTestMaxMatchAlgo()
     
 if __name__ == '__main__':
     main()
