@@ -32,6 +32,16 @@ Create a working Word Error Rate that takes two files as input:
 Change min edit algo to make it work
 TODO: Compute WER from result of minimum edit distance divided by length of gold standard list
 
+Part 3
+-------
+change maxmatch to get a better word error rate
+possible changes:
+    *Not much of change to WER* if there is a single letter anywhere and it's not 'i' or 'a' by itself combine it with the previous word
+    instead of taking the largest word that fits take the smallest word greater >= 2 characters
+    *Made it worse by itself* do not take single characters to be words in the word list/lexicon
+    
+    
+
 
 '''
 
@@ -47,7 +57,7 @@ def readWordsFromFile(filePath, limitNumWords, numWordsLimit):
     '''
     wordlist = []
     #create a regular expression to match the first word in a line of the file
-    pattern = re.compile('[a-zA-Z]+')
+    pattern = re.compile('\w+')
     #read the file into memory
     with open(filePath, 'r') as f:
         #go through the file line by line and get the first word out of each line
@@ -58,16 +68,17 @@ def readWordsFromFile(filePath, limitNumWords, numWordsLimit):
                 if match:
                     wordlist.append(match.group(0))
         else:
+            counter = 0
             for line in f:
                 #make sure the number of words in the set is under the number of word limit keep
                 #adding them to the set
-                if len(wordlist) < numWordsLimit:
+                if counter < numWordsLimit:
                     match = re.search(pattern, line)
                     if match:
                         wordlist.append(match.group(0))
                 else:
                     break
-                
+                counter += 1
     return wordlist
 
 def maxMatch(hashtag, wordlist, maxmatchedHashtag):
@@ -78,16 +89,16 @@ def maxMatch(hashtag, wordlist, maxmatchedHashtag):
     largestWord = ""
     #go through each word in the wordlist
     for word in wordlist:
-        #make a list of the words from the word list that are
-        #in the hashtag 
+        #make a list of the words from the word list 
+        #that fit into the hashtag
         if word in hashtag[0:len(word)]:
             substringList.append(word)
     #if the list is not empty then get the largest word out of the substring list, remove it from the hashtag,
     #and call the max match algorithm again on the new hashtag 
     if len(substringList) != 0:
         #find largest string in the substring list
-        substringList.sort(key=len, reverse=True)
-        largestWord = substringList[0]
+        substringList.sort(key=len)
+        largestWord = substringList[len(substringList) - 1]
         #if there are still characters after the largest word is found 
         #look through the word list again for the next largest word
         if len(largestWord) < len(hashtag):
@@ -104,8 +115,14 @@ def maxMatch(hashtag, wordlist, maxmatchedHashtag):
             print("Error: this maxMatch function statement should never be reached")
     else:
         #if the list is empty then there are no more words in the word list that fit into the hashtag
+        #move over a character and try again otherwise
         #take the rest of the hash tag and add it to the maxmatchHashtag and return it
-        return (maxmatchedHashtag + hashtag)
+        if len(hashtag) > 1:
+            maxmatchedHashtag = maxmatchedHashtag + hashtag[0] + " "
+            return maxMatch(hashtag[1:len(hashtag)], wordlist, maxmatchedHashtag)
+        else:
+            return (maxmatchedHashtag + hashtag)
+        
  
 
 def checkCommandLineArgs(): 
@@ -210,7 +227,7 @@ def main():
         #call min edit and add up wer for each string and then divide that by total number of correct lines in the hashtag file
         totalWER += minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
         
-    #to get the average wer across the entire test set
+    #to get the average word error rate across the entire test set
     print("Average WER across test set is {0}".format(totalWER/len(correctHashtags)))
     
 if __name__ == '__main__':

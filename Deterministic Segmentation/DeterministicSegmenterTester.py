@@ -58,15 +58,15 @@ def initialTestMaxMatchAlgo():
         elif hashtag == "helpmeoverthere":
             #test for the hashtag being made up of some words from the word list
             maxmatchedHashtag = DeterministicSegmenter.maxMatch("helpmeoverthere", testwordlist, maxmatchedHashtag)
-            assertion(maxmatchedHashtag == "help me over the re", "helpmeoverthere should be changed to help me over the re.")
+            assertion(maxmatchedHashtag == "help me over the r e", "helpmeoverthere should be changed to help me over the r e.")
         elif hashtag == "whaaaaat":
             #test for the hashtag being made up of none of the words in the wordlist
             maxmatchedHashtag = DeterministicSegmenter.maxMatch("whaaaaat", testwordlist, maxmatchedHashtag)
-            assertion(maxmatchedHashtag == "whaaaaat", "whaaaaat should be changed to whaaaaat.")
+            assertion(maxmatchedHashtag == "w h a a a a a t", "whaaaaat should be changed to w h a a a a a t.")
         elif hashtag == "findmefood":
             #test for the hashtag being made up of none of the words in the wordlist
             maxmatchedHashtag = DeterministicSegmenter.maxMatch("findmefood", testwordlist, maxmatchedHashtag)
-            assertion(maxmatchedHashtag == "fi ndmefood", "findmefood should be changed to fi ndmefood.")
+            assertion(maxmatchedHashtag == "fi n d me f o o d", "findmefood should be changed to fi n d me f o o d.")
             
 def finalTestMaxMatchAlgo():
     #retrieve the wordlist and hashtag list form the file system
@@ -120,22 +120,22 @@ def testMinEditDistanceAlgo():
             totalWER += DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
         elif correctHashtag == "find me food":
             #maxmatchHashtag:fi ndmefood requires two substitutions fi -> find and ndmefood -> me and an insertion of food
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 3, "Find me food should have a min edit distance of 3")
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 1, "Find me food should have a should have a WER of 1")
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 7, "Find me food should have a min edit distance of 7")
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 7.0/3, "Find me food should have a should have a WER of 7/3")
             totalWER += DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
         elif correctHashtag == "help me over there":
             #masmatchHashtag:help me over the re requires a substitution the->there and a deletion of re
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 2, "help me over there should have a min edit distance of 2")
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 2.0/4, "Man over the moon should have a WER of 3/4")
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 3, "help me over there should have a min edit distance of 3")
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 3.0/4, "help me over there should have a WER of 3/4")
             totalWER += DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
 
     #average the WER across of the hashtags
-    assertion(totalWER/len(correctHashtags) == ((1.0 + 2.0/4)/3.0), "Average WER across test set should be .58")
+    assertion(totalWER/len(correctHashtags) == ((7.0/3 + 3.0/4)/3.0), "Average WER across test set should be .58")
     
 def main():
-    #testReadWordsFromFile()
-    #initialTestMaxMatchAlgo()
-    #finalTestMaxMatchAlgo()
+    testReadWordsFromFile()
+    initialTestMaxMatchAlgo()
+    finalTestMaxMatchAlgo()
     testMinEditDistanceAlgo()
     
 if __name__ == '__main__':
