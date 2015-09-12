@@ -89,14 +89,54 @@ def finalTestMaxMatchAlgo():
     for maxmatchHashtag, expectedmaxmatchHashtag in zip(maxmatchHashtags, expectedHashtags):
         assertion(maxmatchHashtag == expectedmaxmatchHashtag, "My maxmatch algo hashtag: {0} should be the same as the professor's maxmatch algo: {1}.".format(maxmatchHashtag, expectedmaxmatchHashtag))
             
-def testMinEditDistanceAlgo():   
-    #TODO
-    pass
+def testMinEditDistanceAlgo():
+    #retrieve the wordlist and hashtag list form the file system
+    wordlist = DeterministicSegmenter.readWordsFromFile("testwordlist.txt", True, 75000)
+    hashtags = DeterministicSegmenter.readWordsFromFile("testhashtaglist.txt", False, 0)
+    
+    #use the maxmatch algo and change the hashtags and add them to a list
+    maxmatchHashtags = []
+    for hashtag in hashtags:
+        maxmatchHashtags.append(DeterministicSegmenter.maxMatch(hashtag, wordlist, ""))
+    
+    #read in the list of what the hashtags should really look like
+    correctHashtags = []
+    with open("realtesthashtags.txt", "r") as f:
+        for line in f:
+            correctHashtags.append(line.strip())
+    
+    #compare each maxmatchHashtag to each correctHashtag word by word
+    totalWER = 0.0
+    for maxmatchHashtag, correctHashtag in zip(maxmatchHashtags, correctHashtags):
+        #convert each string to a list of the words in the string
+        maxmatchHashtagAsList = maxmatchHashtag.split()
+        correctHashtagAsList = correctHashtag.split()
+        
+        #test WER for the the hashtags created by maxmatch
+        if correctHashtag == "man over the moon" :
+            #maxmatchHashtag is the same as the correctHashtag so no changes need to be made
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 0, "Man over the moon should have a min edit distance of 0")
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 0, "Man over the moon should have a WER of 0")
+            totalWER += DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
+        elif correctHashtag == "find me food":
+            #maxmatchHashtag:fi ndmefood requires two substitutions fi -> find and ndmefood -> me and an insertion of food
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 3, "Find me food should have a min edit distance of 3")
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 1, "Find me food should have a should have a WER of 1")
+            totalWER += DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
+        elif correctHashtag == "help me over there":
+            #masmatchHashtag:help me over the re requires a substitution the->there and a deletion of re
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 2, "help me over there should have a min edit distance of 2")
+            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 2.0/4, "Man over the moon should have a WER of 3/4")
+            totalWER += DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
+
+    #average the WER across of the hashtags
+    assertion(totalWER/len(correctHashtags) == ((1.0 + 2.0/4)/3.0), "Average WER across test set should be .58")
     
 def main():
     #testReadWordsFromFile()
     #initialTestMaxMatchAlgo()
-    finalTestMaxMatchAlgo()
+    #finalTestMaxMatchAlgo()
+    testMinEditDistanceAlgo()
     
 if __name__ == '__main__':
     main()

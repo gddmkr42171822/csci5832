@@ -29,7 +29,7 @@ Part 2
 Create a working Word Error Rate that takes two files as input: 
     the hashtags outputted by the maxmatch and what the hashtag should really look like based on the english language
     
-TODO: change min edit algo to make it work
+Change min edit algo to make it work
 TODO: Compute WER from result of minimum edit distance divided by length of gold standard list
 
 
@@ -157,7 +157,7 @@ def  minEditDist(target, source):
             distance[i][j] = min(distance[i-1][j] + 1,
                                  distance[i][j-1] + 1,
                                  distance[i-1][j-1]+substCost(source[j-1],target[i-1]))
-    return distance[n][m]
+    return float(distance[n][m])
 
 def substCost(source, target):
     if source == target:
@@ -173,11 +173,45 @@ def main():
     print("Path to the hashtag list: " + hashtaglistPath)
     
     wordlist = readWordsFromFile(wordlistPath, True, 75000)
-    hashtaglist = readWordsFromFile(hashtaglistPath, False)
+    hashtaglist = readWordsFromFile(hashtaglistPath, False, 0)
     
-    '''
-    TODO: output maxmatch computed hashtags to a file
-    '''
+    #use the maxmatch algo and change the hashtags and add them to a list
+    print("Calculating the maxmatch of the hashtags.")
+    maxmatchHashtags = []
+    for hashtag in hashtaglist:
+        maxmatchHashtags.append(maxMatch(hashtag, wordlist, ""))
+    
+    #write the maxmatched hashtags to a file
+    print("Writing the maxmatched hashtags to the file myMaxMatchHashtagList.txt.")
+    with open('myMaxMatchHashtagList.txt', 'w') as f:
+        for maxmatchHashtag in maxmatchHashtags:
+            f.write("{0}\n".format(maxmatchHashtag))
+    
+    #caculcate the minimum edit distance between the hashtags I created and what
+    #they really should be
+    #load created hashtags into a set
+    maxmatchHashtags = []
+    with open('myMaxMatchHashtagList.txt', 'r') as f:
+        for line in f:
+            maxmatchHashtags.append(line.strip())
+    #load correct hashtags into a set
+    correctHashtags = []
+    with open('hashtags-train-reference.txt', 'r') as f:
+        for line in f:
+            correctHashtags.append(line.strip())
+    
+    #go through each list and compare the strings
+    print("Calculating the average WER across the test set.")
+    totalWER = 0.0
+    for maxmatchHashtag, correctHashtag in zip(maxmatchHashtags, correctHashtags):
+        #convert each string to a list of the words in the string
+        maxmatchHashtagAsList = maxmatchHashtag.split()
+        correctHashtagAsList = correctHashtag.split()
+        #call min edit and add up wer for each string and then divide that by total number of correct lines in the hashtag file
+        totalWER += minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
+        
+    #to get the average wer across the entire test set
+    print("Average WER across test set is {0}".format(totalWER/len(correctHashtags)))
     
 if __name__ == '__main__':
     main()
