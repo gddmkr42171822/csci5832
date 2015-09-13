@@ -36,13 +36,20 @@ Part 3
 -------
 change maxmatch to get a better word error rate
 possible changes:
-    1) if there is a single letter at the end of the string combine it with the previous word *greedy nature changed, improved WER from .66 to .60* 
-    2) instead of taking the largest word that fits take the smallest word greater >= 2 characters *this was not an improvement*
-    3) do not take single characters to be words in the word list/lexicon *this did not improve anything*
-    4) clean up lexicon/corpus/wordlist to not include typos
-    5) maxmatch backwards instead of forwards * improved WER from .60 to .35*
-    6) dont' add spaces after characters not found in corpus *improved WER from .39 to .35*
+
+Changes to MaxMatch strategy
+    1) instead of taking the largest word that fits take the smallest word greater >= 2 characters *this was not an improvement*
+    2) maxmatch backwards instead of forwards * improved WER from .60 to .35*
+    3) don't add spaces after characters not found in corpus *improved WER from .39 to .35*
+    4) run maxmatch both ways and take output with fewer words, if same number take reverse maxmatch
     
+Changes to gready nature
+    1) if there is a single letter at the end of the string combine it with the previous word *greedy nature changed, improved WER from .66 to .60* 
+
+Changes to lexicon
+    1) do not take single characters to be words in the word list/lexicon *this did not improve anything*
+    2) clean up lexicon/corpus/wordlist to not include typos
+
     
     
 
