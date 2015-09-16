@@ -199,7 +199,7 @@ def anyMaxMatch(hashtag, wordlist, maxmatchedHashtag):
         #find largest string in the substring list
         largestWord = max(substringList, key=len)
         #split the string in half based on the largest word
-        splitSides = hashtag.split(largestWord)
+        splitSides = hashtag.split(largestWord, 1)
         if len(splitSides[0]) < 2:
             maxmatchedHashtag = splitSides[0] + largestWord
         else:
