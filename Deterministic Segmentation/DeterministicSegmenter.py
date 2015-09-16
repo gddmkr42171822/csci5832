@@ -200,30 +200,17 @@ def anyMaxMatch(hashtag, wordlist, maxmatchedHashtag):
         largestWord = max(substringList, key=len)
         #split the string in half based on the largest word
         splitSides = hashtag.split(largestWord)
-        #max match both sides of the original hashtag
-        #check the size of the sides in order to remove unnecessary whitespace characters
-        if len(splitSides[0]) == 0 and len(splitSides[1]) == 0:
-            maxmatchedHashtag = maxmatchedHashtag + largestWord
-        elif len(splitSides[0]) == 0:
-            if len(largestWord) < 2:
-                maxmatchedHashtag = largestWord + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
-            else:
-                maxmatchedHashtag = largestWord + " " + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
-        elif len(splitSides[1]) == 0:
-            if len(largestWord) < 2:
-                maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + largestWord
-            else:
-                maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + " " + largestWord
+        if len(splitSides[0]) < 2:
+            maxmatchedHashtag = splitSides[0] + largestWord
         else:
-            if len(largestWord) < 2:
-                maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + largestWord + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
-            else:
-                maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + " " + largestWord + " " + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
+            maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + " " + largestWord
+        if len(splitSides[1]) < 2:
+            maxmatchedHashtag = maxmatchedHashtag + splitSides[1]
+        else:
+            maxmatchedHashtag = maxmatchedHashtag + " " + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
         return maxmatchedHashtag
-    #if no words were found in the wordlist that fit into the hashtag
     else:
-        maxmatchedHashtag = maxmatchedHashtag + hashtag
-        return maxmatchedHashtag
+        return hashtag
         
 def checkCommandLineArgs(): 
     '''
