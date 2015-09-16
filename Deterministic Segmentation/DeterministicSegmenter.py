@@ -42,6 +42,7 @@ Changes to MaxMatch strategy
     2) maxmatch backwards instead of forwards * improved WER from .60 to .35*
     3) don't add spaces after characters not found in corpus *improved WER from .39 to .35*
     4) run maxmatch both ways and take output with fewer words, if same number take reverse maxmatch
+    5) check for the largest string in any part of the hashtag instead of just at the front or end
     
 Changes to gready nature
     1) if there is a single letter at the end of the string combine it with the previous word *greedy nature changed, improved WER from .66 to .60* 
@@ -129,7 +130,7 @@ def maxMatch(hashtag, wordlist, maxmatchedHashtag):
             #otherwise just add the single character as a new word to the maxmatchedHashtag
             return (maxmatchedHashtag + hashtag)
 
-def improvedMaxMatch(hashtag, wordlist, maxmatchedHashtag):
+def backwardsMaxMatch(hashtag, wordlist, maxmatchedHashtag):
     '''
     TODO: docstring
     '''
@@ -152,7 +153,7 @@ def improvedMaxMatch(hashtag, wordlist, maxmatchedHashtag):
                 maxmatchedHashtag = " " + largestWord + maxmatchedHashtag
             else:
                 maxmatchedHashtag = largestWord + maxmatchedHashtag
-            return improvedMaxMatch(hashtag[:-len(largestWord)], wordlist, maxmatchedHashtag)
+            return backwardsMaxMatch(hashtag[:-len(largestWord)], wordlist, maxmatchedHashtag)
         #if the largest word takes up the entire hashtag
         elif len(largestWord) == len(hashtag):
             #if the largestWord is greater than a single character create a new word
@@ -173,12 +174,57 @@ def improvedMaxMatch(hashtag, wordlist, maxmatchedHashtag):
         if len(hashtag) > 1:
             #IMPROVEMENT: don't add spaces after characters not found in wordlist
             maxmatchedHashtag = hashtag[-1] + maxmatchedHashtag
-            return improvedMaxMatch(hashtag[:-1], wordlist, maxmatchedHashtag)
+            return backwardsMaxMatch(hashtag[:-1], wordlist, maxmatchedHashtag)
         else:
             #if the remaining hashtags is a single character just append it to the previous word
-            #IMPROVMENT: DON'T LET SINGLE CHARACTES BE BY THEMSELVES AT THE BEGINNING OF A WORD
-            return (largestWord + maxmatchedHashtag.lstrip())       
-            
+            #IMPROVMENT: DON'T LET SINGLE CHARACTErS BE BY THEMSELVES AT THE BEGINNING OF A WORD
+            return (hashtag + maxmatchedHashtag.lstrip())    
+        
+def anyMaxMatch(hashtag, wordlist, maxmatchedHashtag):
+    '''
+    TODO: docstring
+    '''
+    #if the hashtag is empty then don't do anything
+    if not hashtag:
+        return maxmatchedHashtag
+    
+    substringList = []
+    largestWord = ""
+    for word in wordlist:
+        #make a list of the words that start anywhere in the hashtag
+        if word in hashtag:
+            substringList.append(word)
+    #if words were found in the wordlist that fit into the hashtag
+    if len(substringList) > 0:
+        #find largest string in the substring list
+        largestWord = max(substringList, key=len)
+        #split the string in half based on the largest word
+        splitSides = hashtag.split(largestWord)
+        #max match both sides of the original hashtag
+        #check the size of the sides in order to remove unnecessary whitespace characters
+        if len(splitSides[0]) == 0 and len(splitSides[1]) == 0:
+            maxmatchedHashtag = maxmatchedHashtag + largestWord
+        elif len(splitSides[0]) == 0:
+            if len(largestWord) < 2:
+                maxmatchedHashtag = largestWord + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
+            else:
+                maxmatchedHashtag = largestWord + " " + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
+        elif len(splitSides[1]) == 0:
+            if len(largestWord) < 2:
+                maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + largestWord
+            else:
+                maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + " " + largestWord
+        else:
+            if len(largestWord) < 2:
+                maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + largestWord + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
+            else:
+                maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + " " + largestWord + " " + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
+        return maxmatchedHashtag
+    #if no words were found in the wordlist that fit into the hashtag
+    else:
+        maxmatchedHashtag = maxmatchedHashtag + hashtag
+        return maxmatchedHashtag
+        
 def checkCommandLineArgs(): 
     '''
     TODO: docstring
@@ -289,10 +335,14 @@ def main():
     wordlist = readWordsFromFile(wordlistPath, True, 75000)
     hashtaglist = readWordsFromFile(hashtaglistPath, False, 0)
     
-    print("Running normal maxmatch function.")
+    '''
+    print("----Running normal maxmatch function.----")
     runMaxMatchMinEdit(maxMatch, wordlist, hashtaglist)
-    print("Running improved maxmatch function.")
-    runMaxMatchMinEdit(improvedMaxMatch, wordlist, hashtaglist)
+    print("----Running backwards maxmatch function----")
+    runMaxMatchMinEdit(backwardsMaxMatch, wordlist, hashtaglist)
+    '''
+    print("----Running any maxmatch function----")
+    runMaxMatchMinEdit(anyMaxMatch, wordlist, hashtaglist)
     
     
 if __name__ == '__main__':
