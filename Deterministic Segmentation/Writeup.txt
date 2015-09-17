@@ -30,6 +30,6 @@ Changes to lexicon
     2) Clean up lexicon/corpus/wordlist to not include typos *did this in the line below*
     3) Remove and insert as many words as possible to correct the output *improve WER from .29 to .11*
     
-Lowest measured WER from the test set was .11.
+Lowest measured WER from the final test set was .2075.  This WER is only the result of changing the algorithm and not the lexicon.
 
     
