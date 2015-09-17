@@ -42,7 +42,7 @@ Changes to MaxMatch strategy
     2) maxmatch backwards instead of forwards * improved WER from .60 to .35*
     3) don't add spaces after characters not found in corpus *improved WER from .39 to .35*
     4) run maxmatch both ways and take output with fewer words, if same number take reverse maxmatch
-    5) check for the largest string in any part of the hashtag instead of just at the front or end
+    5) check for the largest string in any part of the hashtag instead of just at the front or end *improved WER from .35 to .29*
     
 Changes to gready nature
     1) if there is a single letter at the end of the string combine it with the previous word *greedy nature changed, improved WER from .66 to .60* 
@@ -50,6 +50,7 @@ Changes to gready nature
 Changes to lexicon
     1) do not take single characters to be words in the word list/lexicon *this did not improve anything*
     2) clean up lexicon/corpus/wordlist to not include typos
+    3) remove and insert as many words as possible to correct the output * improve WER from .29 to .11 *
 
     
     
@@ -65,7 +66,18 @@ import os
 
 def readWordsFromFile(filePath, limitNumWords, numWordsLimit):
     '''
-    TODO: docstring
+    Function that opens and reads a file line by line and appends the first word
+    it sees on each line to a list
+    
+    @type: string
+    @param filePath: the path to the file to open on the filesystem
+    @type: int
+    @param limitNumWords the maximum number of lines it should read from the file
+    @type: boolean
+    @param numWordLimit: a boolean as to whether the number of lines should be limited or not
+    
+    @rtype: list
+    @return: a list of the first words from each line in the file
     '''
     wordlist = []
     #create a regular expression to match the first word in a line of the file
@@ -95,7 +107,17 @@ def readWordsFromFile(filePath, limitNumWords, numWordsLimit):
 
 def maxMatch(hashtag, wordlist, maxmatchedHashtag):
     '''
-    TODO: docstring
+    Function performs the max match algorithm on a hashtag.
+    
+    @type string:
+    @param hashtag: a hashtag without the #
+    @type list:
+    @param wordlist: the lexicon/corpus used to find words in the hashtag
+    @type string:
+    @param maxmatchedHashtag: the part of the hashtag that max match has already gone through
+    
+    @rtype: string
+    @return: the result of perform max match on the entire hashtag     
     '''
     substringList = []
     largestWord = ""
@@ -132,7 +154,18 @@ def maxMatch(hashtag, wordlist, maxmatchedHashtag):
 
 def backwardsMaxMatch(hashtag, wordlist, maxmatchedHashtag):
     '''
-    TODO: docstring
+    Function performs the max match algorithm on a hashtag but instead
+    of starting at the beginning it starts at the end.
+    
+    @type string:
+    @param hashtag: a hashtag without the #
+    @type list:
+    @param wordlist: the lexicon/corpus used to find words in the hashtag
+    @type string:
+    @param maxmatchedHashtag: the part of the hashtag that max match has already gone through
+    
+    @rtype: string
+    @return: the result of perform max match on the entire hashtag     
     '''
     substringList = []
     largestWord = ""
@@ -182,7 +215,18 @@ def backwardsMaxMatch(hashtag, wordlist, maxmatchedHashtag):
         
 def anyMaxMatch(hashtag, wordlist, maxmatchedHashtag):
     '''
-    TODO: docstring
+    Function performs the max match algorithm on a hashtag but instead of starting
+    at the beginning it finds the largest word anywhere in the hashtag.
+    
+    @type string:
+    @param hashtag: a hashtag without the #
+    @type list:
+    @param wordlist: the lexicon/corpus used to find words in the hashtag
+    @type string:
+    @param maxmatchedHashtag: the part of the hashtag that max match has already gone through
+    
+    @rtype: string
+    @return: the result of perform max match on the entire hashtag     
     '''
     #if the hashtag is empty then don't do anything
     if not hashtag:
@@ -200,21 +244,30 @@ def anyMaxMatch(hashtag, wordlist, maxmatchedHashtag):
         largestWord = max(substringList, key=len)
         #split the string in half based on the largest word
         splitSides = hashtag.split(largestWord, 1)
+        #take each half and perform max match on it
         if len(splitSides[0]) < 2:
+            #just append a single character and not put a space between it and another word
             maxmatchedHashtag = splitSides[0] + largestWord
         else:
             maxmatchedHashtag = anyMaxMatch(splitSides[0], wordlist, maxmatchedHashtag) + " " + largestWord
         if len(splitSides[1]) < 2:
+            #just append a single character and not put a space between it and another word
             maxmatchedHashtag = maxmatchedHashtag + splitSides[1]
         else:
             maxmatchedHashtag = maxmatchedHashtag + " " + anyMaxMatch(splitSides[1], wordlist, maxmatchedHashtag)
         return maxmatchedHashtag
     else:
+        #otherwise just return what is left 
         return hashtag
         
 def checkCommandLineArgs(): 
     '''
-    TODO: docstring
+    Function checks to make sure the user gave the script the right number of commmand
+    line arguments.
+    
+    @rtype: tuple
+    @return: a tuple with the first value being the first command line argument and the second 
+                value being the second command line argument
     ''' 
     #check the user gave the right number of arguments
     #if not print what the user should have given and then exit  
@@ -234,7 +287,18 @@ def  minEditDist(target, source):
     ''' Computes the min edit distance from target to source. Figure 3.25 in the book. Assume that
     insertions, deletions and (actual) substitutions all cost 1 for this HW. Note the indexes are a
     little different from the text. There we are assuming the source and target indexing starts a 1.
-    Here we are using 0-based indexing.'''
+    Here we are using 0-based indexing.
+    
+    @type string:
+    @param target: the string that the source should look like
+    @type string:
+    @param source: the string that the min edit algorithm will be performed on to 
+                    see how closely it resembles the target string
+                    
+    @rtype: float
+    @return: the number of insertions, deletions, and substitutions to make
+                the source look like the target
+    '''
     
     #number of rows of the matrix/table
     n = len(target)
@@ -264,9 +328,6 @@ def  minEditDist(target, source):
     return float(distance[n][m])
 
 def substCost(source, target):
-    '''
-    TODO: docstring
-    '''
     if source == target:
         return 0
     else:
@@ -281,7 +342,7 @@ def runMaxMatchMinEdit(maxmatchFunction, wordlist, hashtaglist):
     
     #write the maxmatched hashtags to a file
     print("Writing the maxmatched hashtags to the file myMaxMatchHashtagList.txt.")
-    with open('myMaxMatchHashtagList.txt', 'w') as f:
+    with open('werthman-out-assgn1.txt', 'w') as f:
         for maxmatchHashtag in maxmatchHashtags:
             f.write("{0}\n".format(maxmatchHashtag))
     
@@ -289,7 +350,7 @@ def runMaxMatchMinEdit(maxmatchFunction, wordlist, hashtaglist):
     #they really should be
     #load created hashtags into a set
     maxmatchHashtags = []
-    with open('myMaxMatchHashtagList.txt', 'r') as f:
+    with open('werthman-out-assgn1.txt', 'r') as f:
         for line in f:
             maxmatchHashtags.append(line.strip())
             
@@ -322,12 +383,10 @@ def main():
     wordlist = readWordsFromFile(wordlistPath, True, 75000)
     hashtaglist = readWordsFromFile(hashtaglistPath, False, 0)
     
-    '''
     print("----Running normal maxmatch function.----")
     runMaxMatchMinEdit(maxMatch, wordlist, hashtaglist)
     print("----Running backwards maxmatch function----")
     runMaxMatchMinEdit(backwardsMaxMatch, wordlist, hashtaglist)
-    '''
     print("----Running any maxmatch function----")
     runMaxMatchMinEdit(anyMaxMatch, wordlist, hashtaglist)
     
