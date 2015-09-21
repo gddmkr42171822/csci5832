@@ -3,7 +3,7 @@ Created on Sep 11, 2015
 
 @author: Bob
 '''
-import DeterministicSegmenter
+import werthman_assgn1
 
 def assertion(boolean, testName):
     if boolean:
@@ -31,8 +31,8 @@ def testReadWordsFromFile():
                  't', 'fi']
     testhashtaglist = ['manoverthemoon', 'helpmeoverthere', 'findmefood', 'whaaaaat']
     createWordAndHashtagFiles()
-    hashtaglist = DeterministicSegmenter.readWordsFromFile('testhashtaglist.txt', False, 20)
-    wordlist =  DeterministicSegmenter.readWordsFromFile('testwordlist.txt', True, 20)
+    hashtaglist = werthman_assgn1.readWordsFromFile('testhashtaglist.txt', False, 20)
+    wordlist =  werthman_assgn1.readWordsFromFile('testwordlist.txt', True, 20)
     
     #tests that the right words and hashtags are in the lists
     for word in wordlist:  
@@ -42,7 +42,7 @@ def testReadWordsFromFile():
         assertion(hashtag in testhashtaglist, "Set contains {0}.".format(hashtag))
     
     #test that the word list is limited by a certain size
-    wordlist = DeterministicSegmenter.readWordsFromFile('testwordlist.txt', True, 2)
+    wordlist = werthman_assgn1.readWordsFromFile('testwordlist.txt', True, 2)
     assertion(len(wordlist) == 2, "Word list should be size 2.")
     
 def initialTestMaxMatchAlgo():
@@ -53,30 +53,30 @@ def initialTestMaxMatchAlgo():
         maxmatchedHashtag = ""
         if hashtag == "manoverthemoon":
             #test for the hashtag being made up of entirely of words in the word list
-            maxmatchedHashtag = DeterministicSegmenter.maxMatch("manoverthemoon", testwordlist, maxmatchedHashtag)
+            maxmatchedHashtag = werthman_assgn1.maxMatch("manoverthemoon", testwordlist, maxmatchedHashtag)
             assertion(maxmatchedHashtag == "man over the moon", "manoverthemoon should be changed to man over the moon.")
         elif hashtag == "helpmeoverthere":
             #test for the hashtag being made up of some words from the word list
-            maxmatchedHashtag = DeterministicSegmenter.maxMatch("helpmeoverthere", testwordlist, maxmatchedHashtag)
+            maxmatchedHashtag = werthman_assgn1.maxMatch("helpmeoverthere", testwordlist, maxmatchedHashtag)
             assertion(maxmatchedHashtag == "help me over the r e", "helpmeoverthere should be changed to help me over the r e.")
         elif hashtag == "whaaaaat":
             #test for the hashtag being made up of none of the words in the wordlist
-            maxmatchedHashtag = DeterministicSegmenter.maxMatch("whaaaaat", testwordlist, maxmatchedHashtag)
+            maxmatchedHashtag = werthman_assgn1.maxMatch("whaaaaat", testwordlist, maxmatchedHashtag)
             assertion(maxmatchedHashtag == "w h a a a a a t", "whaaaaat should be changed to w h a a a a a t.")
         elif hashtag == "findmefood":
             #test for the hashtag being made up of none of the words in the wordlist
-            maxmatchedHashtag = DeterministicSegmenter.maxMatch("findmefood", testwordlist, maxmatchedHashtag)
+            maxmatchedHashtag = werthman_assgn1.maxMatch("findmefood", testwordlist, maxmatchedHashtag)
             assertion(maxmatchedHashtag == "fi n d me f o o d", "findmefood should be changed to fi n d me f o o d.")
             
 def finalTestMaxMatchAlgo():
     #retrieve the wordlist and hashtag list form the file system
-    wordlist = DeterministicSegmenter.readWordsFromFile('bigwordlist.txt', True, 75000)
-    hashtags = DeterministicSegmenter.readWordsFromFile('hashtags-train.txt', False, 0)
+    wordlist = werthman_assgn1.readWordsFromFile('bigwordlist.txt', True, 75000)
+    hashtags = werthman_assgn1.readWordsFromFile('hashtags-train.txt', False, 0)
     
     #use the maxmatch algo and change the hashtags and add them to a list
     maxmatchHashtags = []
     for hashtag in hashtags:
-        maxmatchHashtags.append(DeterministicSegmenter.maxMatch(hashtag, wordlist, ""))
+        maxmatchHashtags.append(werthman_assgn1.maxMatch(hashtag, wordlist, ""))
         
     #get the hashtags of the expected output of the maxmatch algo from professor's provided file
     expectedHashtags = []
@@ -91,13 +91,13 @@ def finalTestMaxMatchAlgo():
             
 def testMinEditDistanceAlgo():
     #retrieve the wordlist and hashtag list form the file system
-    wordlist = DeterministicSegmenter.readWordsFromFile("testwordlist.txt", True, 75000)
-    hashtags = DeterministicSegmenter.readWordsFromFile("testhashtaglist.txt", False, 0)
+    wordlist = werthman_assgn1.readWordsFromFile("testwordlist.txt", True, 75000)
+    hashtags = werthman_assgn1.readWordsFromFile("testhashtaglist.txt", False, 0)
     
     #use the maxmatch algo and change the hashtags and add them to a list
     maxmatchHashtags = []
     for hashtag in hashtags:
-        maxmatchHashtags.append(DeterministicSegmenter.maxMatch(hashtag, wordlist, ""))
+        maxmatchHashtags.append(werthman_assgn1.maxMatch(hashtag, wordlist, ""))
     
     #read in the list of what the hashtags should really look like
     correctHashtags = []
@@ -115,19 +115,19 @@ def testMinEditDistanceAlgo():
         #test WER for the the hashtags created by maxmatch
         if correctHashtag == "man over the moon" :
             #maxmatchHashtag is the same as the correctHashtag so no changes need to be made
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 0, "Man over the moon should have a min edit distance of 0")
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 0, "Man over the moon should have a WER of 0")
-            totalWER += DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
+            assertion(werthman_assgn1.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 0, "Man over the moon should have a min edit distance of 0")
+            assertion(werthman_assgn1.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 0, "Man over the moon should have a WER of 0")
+            totalWER += werthman_assgn1.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
         elif correctHashtag == "find me food":
             #maxmatchHashtag:fi ndmefood requires two substitutions fi -> find and ndmefood -> me and an insertion of food
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 7, "Find me food should have a min edit distance of 7")
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 7.0/3, "Find me food should have a should have a WER of 7/3")
-            totalWER += DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
+            assertion(werthman_assgn1.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 7, "Find me food should have a min edit distance of 7")
+            assertion(werthman_assgn1.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 7.0/3, "Find me food should have a should have a WER of 7/3")
+            totalWER += werthman_assgn1.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
         elif correctHashtag == "help me over there":
             #masmatchHashtag:help me over the re requires a substitution the->there and a deletion of re
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 3, "help me over there should have a min edit distance of 3")
-            assertion(DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 3.0/4, "help me over there should have a WER of 3/4")
-            totalWER += DeterministicSegmenter.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
+            assertion(werthman_assgn1.minEditDist(correctHashtagAsList, maxmatchHashtagAsList) == 3, "help me over there should have a min edit distance of 3")
+            assertion(werthman_assgn1.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList) == 3.0/4, "help me over there should have a WER of 3/4")
+            totalWER += werthman_assgn1.minEditDist(correctHashtagAsList, maxmatchHashtagAsList)/len(correctHashtagAsList)
 
     #average the WER across of the hashtags
     assertion(totalWER/len(correctHashtags) == ((7.0/3 + 3.0/4)/3.0), "Average WER across test set should be .58")
