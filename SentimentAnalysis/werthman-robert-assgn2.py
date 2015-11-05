@@ -4,7 +4,7 @@ Robert Werthman
 Naive-Bayes with add one smoothing
 P(word|-) = (frequency of the word in negative reviews class + 1)/
             (total count of all words in negative reviews class + number of words in entire vocabulary of training set (V)) 
-P(review|-) = probability of each of the words being negative multiplied together
+P(review|-) = log of the probability of each of the words being negative added together
 '''
 import re
 import math
@@ -65,6 +65,7 @@ def probabilityOfClass(reviewClass,review,vocabulary):
         freqOfWordInClass = 0
         if word in reviewClass:
             freqOfWordInClass = reviewClass[word]
+            #print word
         else:
             freqOfWordInClass = 0
         probabilityOfWord = ((freqOfWordInClass+1)*1.0)/((totalCountOfWordsInClass+len(vocabulary))*1.0)
@@ -85,20 +86,29 @@ def main():
     vocabulary = posWords.copy()
     vocabulary.update(negWords)
     # Retrieve the reviews from a file and add them in a dictionary with the review ID as the key
-    reviews = gatherReviews('hotelPosT-train.txt')
+    #reviews = gatherReviews('hotelPosT-train.txt')
     #reviews = gatherReviews('hoteNegT-train.txt')
+    reviews = gatherReviews('test-reviews.txt')
+    # Create an output file for the sentiment analysis of the reviews
+    f = open('werthman-robert-assgn2-out.txt', 'w')
     # Check if the reviews are positive or negative
-    line = 1
     for review in reviews:
+        # Get a list of the log of the probabilities for each word in the review
+        # for each sentiment class
         negProb = probabilityOfClass(negWords, reviews[review], vocabulary)
         posProb = probabilityOfClass(posWords, reviews[review], vocabulary)
+        # Add the list of probabilities together for each class
         negProb = reduce(lambda x,y: x+y, negProb)
         posProb = reduce(lambda x,y: x+y, posProb)
+        # Evaluate the sentiment of each review by comparing the probabilities of each class
+        # for that review
         if posProb > negProb:
-            print "{0}. {1}\tPOS".format(line,review)
-        elif posProb < negProb:
-            print "{0}. {1}\tNEG".format(line,review)
-        line += 1
+            f.write('{0}\tPOS\n'.format(review.upper()))
+            #print "{0}. {1}\tPOS".format(line,review)
+        elif negProb > posProb:
+            f.write('{0}\tNEG\n'.format(review.upper()))
+            #print "{0}. {1}\tNEG".format(line,review)
+    f.close()
     
 
 if __name__ == '__main__':
