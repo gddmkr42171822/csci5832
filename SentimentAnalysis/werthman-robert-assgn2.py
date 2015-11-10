@@ -8,12 +8,13 @@ P(review|-) = log of the probability of each of the words being negative added t
 '''
 import re
 import math
+import random
 
 # Words to remove that don't have any sentiment
-stopList = ['the','and','a','was','to','i','in','of','is','it']
+stopList = ['the','and','a','was','to','i','in','of','is','it','you','we','they','at','on', 'that']
 
 def checkOutput(outputFile, answerFile):
-    wrongIDs = 0
+    wrongReviews = 0
     answers = {}
     output = {}
     # Read in the IDs and tags from the correct answers file
@@ -31,11 +32,14 @@ def checkOutput(outputFile, answerFile):
     for key in output:
         if key in answers:
             if output[key] == answers[key]:
-                print "{0} is correct.".format(key)
+                pass
+                #print "{0} is correct.".format(key)
             else:
-                print "{0} is incorrect.".format(key)
-                wrongIDs += 1
-    print 'Number of wrong IDs: {0}'.format(wrongIDs)
+                #print 'id {0} output {1} answers {2}'.format(key, output[key], answers[key])
+                #print "{0} is incorrect.".format(key)
+                wrongReviews += 1
+    #print 'Number of wrong IDs: {0}'.format(wrongReviews)
+    return wrongReviews
 
 def wordCount(file):
     '''
@@ -45,7 +49,7 @@ def wordCount(file):
     f = open(file, 'r')
     for line in f:
         # Remove end of punctuation
-        line = re.sub('[.,!?]', '', line)
+        line = re.sub('[.,!?():;]', '', line)
         # Make everything lowercase
         line = line.lower()
         # Split words on spaces in the line
@@ -72,7 +76,7 @@ def gatherReviews(file):
     f = open(file,'r')
     for line in f:
         # Remove end of punctuation
-        line = re.sub('[.,!?]', '', line)
+        line = re.sub('[.,!?():;]', '', line)
          # Make everything lowercase
         line = line.lower()
         # Split words on spaces in the line
@@ -108,44 +112,104 @@ def probabilityOfClass(reviewClass,review,vocabulary):
     return listOfProbabilities
         
     
-    
+def copyFile(inputFile, outputFile):
+    # Open the files
+    input = open(inputFile, 'r')
+    output = open(outputFile, 'w')
+    # Read in the lines from the input file
+    lines = input.readlines()
+    # Write out the lines from the input file to the output file
+    output.writelines(lines)
+    # Close the files
+    input.close()
+    output.close()
 
+def readFileIntoList(inputFile):
+    f = open(inputFile, 'r')
+    lines = f.readlines()
+    f.close()
+    return lines
+
+def writeListToFile(outputFile, list, append):
+    if append:
+        f = open(outputFile, 'a')
+    else:
+        f = open(outputFile, 'w')
+    f.writelines(list)
+    f.close()
+
+def createCrossValidationFiles(n):
+    # Make copies of the original positive and negative review files
+    copyFile('hotelPosT-train.txt', 'postrain-reviews.txt')
+    copyFile('hoteNegT-train.txt', 'negtrain-reviews.txt')
+    
+    # Read the positive and negative reviews into two separate lists
+    posReviews = readFileIntoList('postrain-reviews.txt')
+    negReviews = readFileIntoList('negtrain-reviews.txt')    
+    
+    # Use n random reviews for the positive review test set
+    # Use the remaining reviews for the positive training set
+    testPosReviews = random.sample(posReviews, n)
+    trainingPosReviews = [review for review in posReviews if review not in testPosReviews]
+    
+    # Use n random reviews for the negative review test set
+    # Use the remaining reviews for the negative training set
+    testNegReviews = random.sample(negReviews, n)
+    trainingNegReviews = [review for review in negReviews if review not in testNegReviews]
+    
+    # Write the test reviews to the test set file
+    writeListToFile('test-reviews.txt', testPosReviews, False)
+    writeListToFile('test-reviews.txt', testNegReviews, True)
+    
+    # Write the training reviews to the test set file
+    writeListToFile('postrain-reviews.txt', trainingPosReviews, False)
+    writeListToFile('negtrain-reviews.txt', trainingNegReviews, False) 
 
 
 def main():
-    # Create a dictionary with all the words in the positive review set
-    posWords = wordCount('postest_reviews.txt')
-    # Create a dictionary with all the words in the negative review set
-    negWords = wordCount('negtest_reviews.txt')
-    # Create a dictionary of all the words in the training set
-    vocabulary = posWords.copy()
-    vocabulary.update(negWords)
-    # Retrieve the reviews from a file and add them in a dictionary with the review ID as the key
-    #reviews = gatherReviews('test-reviews.txt')
-    # Create an output file for the sentiment analysis of the reviews
-    f = open('werthman-robert-assgn2-out.txt', 'w')
-    # Check if the reviews are positive or negative
-    reviews = gatherReviews('test-reviews.txt')
-    for review in reviews:
-        # Get a list of the log of the probabilities for each word in the review
-        # for each sentiment class
-        negProb = probabilityOfClass(negWords, reviews[review], vocabulary)
-        posProb = probabilityOfClass(posWords, reviews[review], vocabulary)
-        # Add the list of probabilities together for each class
-        negProb = reduce(lambda x,y: x+y, negProb)
-        posProb = reduce(lambda x,y: x+y, posProb)
-        # Evaluate the sentiment of each review by comparing the probabilities of each class
-        # for that review
-        if posProb > negProb:
-            f.write('{0}\tPOS\n'.format(review.upper()))
-            #print "{0}. {1}\tPOS".format(line,review)
-        elif negProb > posProb:
-            f.write('{0}\tNEG\n'.format(review.upper()))
-            #print "{0}. {1}\tNEG".format(line,review)
-    f.close()
-    
-    checkOutput('werthman-robert-assgn2-out.txt','answers.txt')
-    
+    wrongReviews = 0.0
+    n = 5
+    x = 10
+    for i in range(0,x):
+        createCrossValidationFiles(n)
+        
+        # Create a dictionary with all the words in the positive review set
+        posWords = wordCount('postrain-reviews.txt')
+        # Create a dictionary with all the words in the negative review set
+        negWords = wordCount('negtrain-reviews.txt')
+        # Create a dictionary of all the words in the training set
+        vocabulary = posWords.copy()
+        vocabulary.update(negWords)
+        # Retrieve the reviews from a file and add them in a dictionary with the review ID as the key
+        #reviews = gatherReviews('test-reviews.txt')
+        # Create an output file for the sentiment analysis of the reviews
+        f = open('werthman-robert-assgn2-out.txt', 'w')
+        # Check if the reviews are positive or negative
+        reviews = gatherReviews('test-reviews.txt')
+        for review in reviews:
+            # Get a list of the log of the probabilities for each word in the review
+            # for each sentiment class
+            negProb = probabilityOfClass(negWords, reviews[review], vocabulary)
+            posProb = probabilityOfClass(posWords, reviews[review], vocabulary)
+            # Add the list of probabilities together for each class
+            negProb = reduce(lambda x,y: x+y, negProb)
+            posProb = reduce(lambda x,y: x+y, posProb)
+            # Evaluate the sentiment of each review by comparing the probabilities of each class
+            # for that review
+            if posProb > negProb:
+                f.write('{0}\tPOS\n'.format(review.upper()))
+                #print "{0}. {1}\tPOS".format(line,review)
+            elif negProb > posProb:
+                f.write('{0}\tNEG\n'.format(review.upper()))
+                #print "{0}. {1}\tNEG".format(line,review)
+        f.close()
+        
+        wrongReviews += checkOutput('werthman-robert-assgn2-out.txt','answers.txt') 
+        
+    print 'Number of wrongly labeled reviews {0}'.format(wrongReviews)
+    totalTestReviews = (n+n)*10.0
+    numCorrectReviews = totalTestReviews-wrongReviews
+    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0)   
 
 if __name__ == '__main__':
     main()
