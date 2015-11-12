@@ -168,8 +168,8 @@ def createCrossValidationFiles(n):
 
 def main():
     wrongReviews = 0.0
-    n = 5
-    x = 10
+    n = 10
+    x = 100
     for i in range(0,x):
         createCrossValidationFiles(n)
         
@@ -206,9 +206,9 @@ def main():
         
         wrongReviews += checkOutput('werthman-robert-assgn2-out.txt','answers.txt') 
         
-    print 'Number of wrongly labeled reviews {0}'.format(wrongReviews)
-    totalTestReviews = (n+n)*10.0
+    totalTestReviews = (n+n)*x
     numCorrectReviews = totalTestReviews-wrongReviews
+    print '{0} wrongly labeled reviews out of {1} total test reviews.'.format(wrongReviews, totalTestReviews)
     print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0)   
 
 if __name__ == '__main__':
