@@ -1,1 +1,29 @@
-Stop list did help
+Robert Werthman
+CSCI 5832
+HW2 Sentiment Analysis
+
+Development Training Process
+-------------------------------
+For development and training initially I started by taking in all of the training
+reviews and then testing on all the positive ones.  The I would test on all of the
+negative ones.  Both of these tests should yield the correct tags for each test review 
+because those reviews are in the training set.  
+
+I then used cross-validation by testing 10 random reviews from each class (20 total) and
+using the rest of the reviews as the training data.  I ran this cross-validation test 100
+times.  I then calculated the percentage I got correct.
+
+Predicted Performance
+----------------------
+Based on the cross-validation testing that I did, I expect to get around between %85 and %92 correct.
+
+Actual Performance
+------------------
+In practice, with the real testing set I labeled %88 percent of the reviews with the correct sentiment.
+This means I got 6 out of 50 reviews wrong.
+
+Improving The System
+--------------------
+The only thing I tried to improve the system was to use a stop list.  This, however,
+did not improve the results at all.  I had a hard time figuring out what to change
+because naive bayes with add-one smoothing was already fairly accurate.

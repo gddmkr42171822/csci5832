@@ -1,5 +1,7 @@
 '''
 Robert Werthman
+CSCI 5832
+HW2 Sentiment Analysis
 
 Naive-Bayes with add one smoothing
 P(word|-) = (frequency of the word in negative reviews class + 1)/
@@ -11,7 +13,9 @@ import math
 import random
 
 # Words to remove that don't have any sentiment
-stopList = ['the','and','a','was','to','i','in','of','is','it','you','we','they','at','on', 'that']
+#stopList = ['the','and','a','was','to','i','in','of','is','it','you','we','they',
+#           'at','on', 'that', 'my', 'for', 'this']
+stopList = []
 
 def checkOutput(outputFile, answerFile):
     wrongReviews = 0
@@ -35,7 +39,7 @@ def checkOutput(outputFile, answerFile):
                 pass
                 #print "{0} is correct.".format(key)
             else:
-                #print 'id {0} output {1} answers {2}'.format(key, output[key], answers[key])
+                print '{0} output {1} answer {2}'.format(key, output[key], answers[key])
                 #print "{0} is incorrect.".format(key)
                 wrongReviews += 1
     #print 'Number of wrong IDs: {0}'.format(wrongReviews)
@@ -62,9 +66,11 @@ def wordCount(file):
                 d[word] += 1
             else:
                 d[word] = 1
+    '''
     # Remove any words from the stop list
     for word in stopList:
         d.pop(word)
+    '''
     f.close()
     return d        
 
@@ -83,9 +89,11 @@ def gatherReviews(file):
         line = line.split()
         # Put review ID in the dictionary as key and rest of the words of the review as value
         d[line[0]] = line[1:]
+        '''
         # Remove words in the review from the stop list
         cleanedList = [word for word in d[line[0]] if word not in stopList]
         d[line[0]] = cleanedList
+        '''
         
     f.close()
     return d
@@ -169,9 +177,10 @@ def createCrossValidationFiles(n):
 def main():
     wrongReviews = 0.0
     n = 10
-    x = 100
+    x = 1
     for i in range(0,x):
-        createCrossValidationFiles(n)
+        #createCrossValidationFiles(n)
+        #createCrossValidationFiles(0)
         
         # Create a dictionary with all the words in the positive review set
         posWords = wordCount('postrain-reviews.txt')
@@ -185,7 +194,7 @@ def main():
         # Create an output file for the sentiment analysis of the reviews
         f = open('werthman-robert-assgn2-out.txt', 'w')
         # Check if the reviews are positive or negative
-        reviews = gatherReviews('test-reviews.txt')
+        reviews = gatherReviews('HW2-testset.txt')
         for review in reviews:
             # Get a list of the log of the probabilities for each word in the review
             # for each sentiment class
@@ -205,11 +214,14 @@ def main():
         f.close()
         
         wrongReviews += checkOutput('werthman-robert-assgn2-out.txt','answers.txt') 
-        
-    totalTestReviews = (n+n)*x
+    
+    # For running training set as test set
+    #totalTestReviews = (n+n)*x
+    # For running real test set
+    totalTestReviews = 50
     numCorrectReviews = totalTestReviews-wrongReviews
     print '{0} wrongly labeled reviews out of {1} total test reviews.'.format(wrongReviews, totalTestReviews)
-    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0)   
+    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0)  
 
 if __name__ == '__main__':
     main()
