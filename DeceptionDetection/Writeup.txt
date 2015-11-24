@@ -1,0 +1,6 @@
+Part 1:
+I was labeling around %48 of the reviews correctly.
+
+
+Part 2:
+I tried to stem the words and the percentage I got correct barely improved (went up a %1 point).
