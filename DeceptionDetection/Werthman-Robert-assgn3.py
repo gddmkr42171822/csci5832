@@ -17,6 +17,10 @@ from sklearn.svm import SVC
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn import metrics
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import Perceptron
 
 inc = open('incorrect-answers.txt', 'w')
 def checkOutput(outputFile, answerFile):
@@ -66,23 +70,7 @@ def wordCount(file):
         # Split words on spaces in the line
         line = line.strip().split()
         # Remove the ID-.... from the line
-        line = line[1:]
-        
-        '''
-        tagged = nltk.pos_tag(line)
-        counts = Counter(tag for word,tag in tagged)
-        verbCount = 0
-        nounCount = 0
-        for key in counts:
-            if 'VB' in key:
-                verbCount += counts[key]
-            elif 'NN' in key:
-                nounCount += counts[key]
-        
-        VerbCounts.append(verbCount)
-        NounCounts.append(nounCount)
-        '''
-            
+        line = line[1:]    
         # Create a dictionary with the key being the word and the value being the count
         for word in line:
             #word = stem(word)
@@ -194,7 +182,7 @@ def createCrossValidationFiles(n):
     writeListToFile('truetrain-reviews.txt', trainingTrueReviews, False)
     writeListToFile('falsetrain-reviews.txt', trainingFalseReviews, False) 
     
-def SupportVectorClassifier():
+def ScikitClassify():
     # Read in the test and training reviews
     t = gatherReviews('truetrain-reviews.txt')
     f = gatherReviews('falsetrain-reviews.txt')
@@ -236,19 +224,54 @@ def SupportVectorClassifier():
     X_train = ch2.fit_transform(X_train, targets)
     X_test = ch2.transform(X_test)
     
-    # Fitting the reviews and features to the Support Vector Machine
-    # classifier
-    clf = SVC()
+    # Fitting the reviews and features to a classifier
+    #clf = LinearSVC()
+    #clf = SGDClassifier()  
+    #clf = Perceptron() 
+    clf = PassiveAggressiveClassifier()
     clf.fit(X_train, targets)
 
     # Running the classifier on the test set
     # and returning the predicted encoded labels for each 
     # test review
-    results = clf.predict(X_test)    
+    results = clf.predict(X_test)  
     
-    return results, testIDs        
-    
+    # Output the results
+    f = open('werthman-robert-assgn3-out.txt', 'w')
+    for id,result in zip(testIDs,results):
+        if result == 1:
+            f.write('{0}\tT\n'.format(id))
+        elif result == 0:
+            f.write('{0}\tF\n'.format(id))
+    f.close()  
 
+def NaiveBayesClassify():
+    # Create a dictionary with all the words in the true review set
+    trueWords = wordCount('truetrain-reviews.txt')
+    # Create a dictionary with all the words in the false review set
+    falseWords = wordCount('falsetrain-reviews.txt')
+    # Create a dictionary of all the words in the training set
+    vocabulary = trueWords.copy()
+    vocabulary.update(falseWords)
+    # Create an output file for the sentiment analysis of the reviews
+    f = open('werthman-robert-assgn3-out.txt', 'w')
+    # Check if the reviews are true or false
+    reviews = gatherReviews('test-reviews.txt')
+    for review in reviews:
+        # Get a list of the log of the probabilities for each word in the review
+        # for each sentiment class
+        falseProb = probabilityOfClass(falseWords, reviews[review], vocabulary)
+        trueProb = probabilityOfClass(trueWords, reviews[review], vocabulary)
+        # Add the list of probabilities together for each class
+        falseProb = reduce(lambda x,y: x+y, falseProb)
+        trueProb = reduce(lambda x,y: x+y, trueProb)
+        # Evaluate the sentiment of each review by comparing the probabilities of each class
+        # for that review
+        if trueProb > falseProb:
+            f.write('{0}\tT\n'.format(review.upper()))
+        elif falseProb > trueProb:
+            f.write('{0}\tF\n'.format(review.upper()))
+    f.close()    
 
 def main():
     wrongReviews = 0.0
@@ -256,14 +279,8 @@ def main():
     x = 100
     for i in range(0,x):
         createCrossValidationFiles(n)
-        f = open('werthman-robert-assgn3-out.txt', 'w')
-        results, ids = SupportVectorClassifier()
-        for id,result in zip(ids,results):
-            if result == 1:
-                f.write('{0}\tT\n'.format(id))
-            elif result == 0:
-                f.write('{0}\tF\n'.format(id))
-        f.close()
+        #ScikitClassify()
+        NaiveBayesClassify()
         wrongReviews += checkOutput('werthman-robert-assgn3-out.txt','answers.txt') 
     totalTestReviews = (n+n)*x
     numCorrectReviews = totalTestReviews-wrongReviews
