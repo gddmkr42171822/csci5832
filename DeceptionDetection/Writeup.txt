@@ -1,11 +1,24 @@
-Part 1:
-----------------
-1. With the original Naive Bayes from homework 2, I was labeling around ** of the test reviews correctly.
+Training/Development testing
+--------------------
+I used a 10% test, 90% training split of the reviews for evaluation.
+The 10% of the test reviews was comprised of 10 randomly selected reviews from each review class.
+This cross validation was run 100 times and looked at the accuracy of labeling a total of 2000 reviews i.e. how many
+of the 2000 reviews were labeled correctly.
+
+Predicted Performance
+----------------------
+1. With the original Naive Bayes from homework 2, I was labeling around 48% of training reviews correctly.
+	I think I will get around 44% on the test set.
+2. With the other classifiers from the scikit library I think I will get around 56% since I orginally got 
+	around 58% on the test reviews.
+	
+Actual Performance
+-------------------
 
 
 
-Part 2:
--------------------------
+Modifications/Improvements
+--------------
 1. I tried to stem the words and the percentage I got correct barely improved (went up a %1 point).
 2. I tried to find patterns with POS tagging and according to an article [3].
 	Typically a fake reviews had more verbs relative to nouns.  I did find this but I was not sure what to do with that information.
@@ -14,6 +27,7 @@ Part 2:
 4. I tried other classifiers like Multinomial Bayes and Stochastic Gradient Descent but they gave about the same percentage
 	as support vector.
 5. The classifier that was somewhat better was the PassiveAggressiveClassifier which labeled about *** of the test reviews correctly.
+6. Increasing the number of features from 10 to 100 increased the accuracy of all of the classifiers by 2-3%.
 
 
 Sources:

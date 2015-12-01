@@ -6,12 +6,7 @@ HW3 Deception Detection
 import re
 import math
 import random
-import sys
-import nltk
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import Pipeline
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn import svm
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -220,15 +215,15 @@ def ScikitClassify():
     X_test = vectorizer.transform(docs_test)
     
     # Extracting the features with a chi-squared test
-    ch2 = SelectKBest(chi2)
+    ch2 = SelectKBest(chi2,k=100)
     X_train = ch2.fit_transform(X_train, targets)
     X_test = ch2.transform(X_test)
     
     # Fitting the reviews and features to a classifier
-    #clf = LinearSVC()
+    clf = LinearSVC()
     #clf = SGDClassifier()  
     #clf = Perceptron() 
-    clf = PassiveAggressiveClassifier()
+    #clf = PassiveAggressiveClassifier()
     clf.fit(X_train, targets)
 
     # Running the classifier on the test set
@@ -279,8 +274,8 @@ def main():
     x = 100
     for i in range(0,x):
         createCrossValidationFiles(n)
-        #ScikitClassify()
-        NaiveBayesClassify()
+        ScikitClassify()
+        #NaiveBayesClassify()
         wrongReviews += checkOutput('werthman-robert-assgn3-out.txt','answers.txt') 
     totalTestReviews = (n+n)*x
     numCorrectReviews = totalTestReviews-wrongReviews
