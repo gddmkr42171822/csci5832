@@ -14,6 +14,9 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn import svm
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_selection import SelectKBest, chi2
+from sklearn import metrics
 
 inc = open('incorrect-answers.txt', 'w')
 def checkOutput(outputFile, answerFile):
@@ -191,10 +194,13 @@ def createCrossValidationFiles(n):
     writeListToFile('truetrain-reviews.txt', trainingTrueReviews, False)
     writeListToFile('falsetrain-reviews.txt', trainingFalseReviews, False) 
     
-def SVM():
+def SupportVectorClassifier():
+    # Read in the test and training reviews
     t = gatherReviews('truetrain-reviews.txt')
     f = gatherReviews('falsetrain-reviews.txt')
     test = gatherReviews('test-reviews.txt')
+    # Create lists of strings from those reviews instead
+    # of lists of words
     testReviews = test.values()
     testIDs = test.keys()
     testIDs = [x.upper() for x in testIDs]
@@ -211,98 +217,60 @@ def SVM():
         fstrings.append(review)
     for review in testReviews:
         review = ' '.join(review)
-        docs_test.append(review)
-        
-    
+        docs_test.append(review)   
+    # Encoding T as 1 and F as 0 for each review
     tTargets = len(tstrings)*[1]
     fTargets = len(fstrings)*[0]
+    # Creating a giant list of the reviews as strings
     reviews = tstrings+fstrings
+    # Creating a giant list of the encoded review labels
     targets = tTargets+fTargets
     
-    text_clf = Pipeline([('vect', CountVectorizer()),
-                     ('tfidf', TfidfTransformer()),
-                     ('clf', SVC()),
-                     ])
+    # Creating vector out of the training and test reviews
+    vectorizer = TfidfVectorizer()
+    X_train = vectorizer.fit_transform(reviews)
+    X_test = vectorizer.transform(docs_test)
     
+    # Extracting the features with a chi-squared test
+    ch2 = SelectKBest(chi2)
+    X_train = ch2.fit_transform(X_train, targets)
+    X_test = ch2.transform(X_test)
     
-    count_vect = CountVectorizer()
-    X_train_counts = count_vect.fit_transform(reviews)
-    tfidf_transformer = TfidfTransformer()
-    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+    # Fitting the reviews and features to the Support Vector Machine
+    # classifier
     clf = SVC()
-    clf.fit(X_train_tfidf, targets)
+    clf.fit(X_train, targets)
+
+    # Running the classifier on the test set
+    # and returning the predicted encoded labels for each 
+    # test review
+    results = clf.predict(X_test)    
     
-    print clf.predict(docs_test)
-    #return predicted, testIDs        
+    return results, testIDs        
     
 
 
 def main():
     wrongReviews = 0.0
     n = 10
-    x = 1
+    x = 100
     for i in range(0,x):
         createCrossValidationFiles(n)
         f = open('werthman-robert-assgn3-out.txt', 'w')
-        reviews, ids = SVM()
-        for id,review in zip(ids,reviews):
-            if review == 1:
+        results, ids = SupportVectorClassifier()
+        for id,result in zip(ids,results):
+            if result == 1:
                 f.write('{0}\tT\n'.format(id))
-            elif review == 0:
+            elif result == 0:
                 f.write('{0}\tF\n'.format(id))
         f.close()
         wrongReviews += checkOutput('werthman-robert-assgn3-out.txt','answers.txt') 
-    # For running training set as test set
     totalTestReviews = (n+n)*x
     numCorrectReviews = totalTestReviews-wrongReviews
     print '{0} wrongly labeled reviews out of {1} total test reviews.'.format(wrongReviews, totalTestReviews)
-    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0) 
-    '''
-        #createCrossValidationFiles(0)
-        
-        # Create a dictionary with all the words in the true review set
-        trueWords = wordCount('truetrain-reviews.txt')
-        # Create a dictionary with all the words in the false review set
-        falseWords = wordCount('falsetrain-reviews.txt')
-
-        # Create a dictionary of all the words in the training set
-        vocabulary = trueWords.copy()
-        vocabulary.update(falseWords)
-        # Retrieve the reviews from a file and add them in a dictionary with the review ID as the key
-        reviews = gatherReviews('test-reviews.txt')
-        # Create an output file for the sentiment analysis of the reviews
-        f = open('werthman-robert-assgn3-out.txt', 'w')
-        # Check if the reviews are positive or negative
-        #reviews = gatherReviews('HW2-testset.txt')
-        for review in reviews:
-            # Get a list of the log of the probabilities for each word in the review
-            # for each sentiment class
-            falseProb = probabilityOfClass(falseWords, reviews[review], vocabulary)
-            trueProb = probabilityOfClass(trueWords, reviews[review], vocabulary)
-            # Add the list of probabilities together for each class
-            falseProb = reduce(lambda x,y: x+y, falseProb)
-            trueProb = reduce(lambda x,y: x+y, trueProb)
-            # Evaluate the sentiment of each review by comparing the probabilities of each class
-            # for that review
-            if trueProb > falseProb:
-                f.write('{0}\tT\n'.format(review.upper()))
-                #print "{0}. {1}\tPOS".format(line,review)
-            elif falseProb  > trueProb:
-                f.write('{0}\tF\n'.format(review.upper()))
-                #print "{0}. {1}\tNEG".format(line,review)
-            else:
-                print "Problem."
-        f.close()
-        
-        wrongReviews += checkOutput('werthman-robert-assgn3-out.txt','answers.txt') 
-    
-    # For running training set as test set
-    totalTestReviews = (n+n)*x
-    numCorrectReviews = totalTestReviews-wrongReviews
-    print '{0} wrongly labeled reviews out of {1} total test reviews.'.format(wrongReviews, totalTestReviews)
-    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0) 
+    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0)
+    # Close incorrect output file
     inc.close() 
-    '''
 
 if __name__ == '__main__':
     main()

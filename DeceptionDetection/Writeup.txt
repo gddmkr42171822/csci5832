@@ -1,10 +1,19 @@
 Part 1:
-With the original Naive Bayes from homework 2, I was labeling around %48 of the reviews correctly.
+----------------
+1. With the original Naive Bayes from homework 2, I was labeling around %48 of the reviews correctly.
 
 
 
 Part 2:
-I tried to stem the words and the percentage I got correct barely improved (went up a %1 point).
-I tried to find patterns with POS tagging and according to this article (https://aclweb.org/anthology/N/N13/N13-1053.pdf)
-typically a fake reviews had more verbs relative to nouns.  I did find this but I was not sure
-what to do with that information.
+-------------------------
+1. I tried to stem the words and the percentage I got correct barely improved (went up a %1 point).
+2. I tried to find patterns with POS tagging and according to this article (https://aclweb.org/anthology/N/N13/N13-1053.pdf)
+	Typically a fake reviews had more verbs relative to nouns.  I did find this but I was not sure what to do with that information.
+3. I then tried based on that same article and forum posts on moodle to use a support vector classifier and the chi squared test feature extractor
+	of the scikit library.  This labeled around %52 of the reviews correctly.
+
+
+Sources:
+----------
+https://stackoverflow.com/questions/19484499/text-mining-with-svm-classifier
+http://scikit-learn.org/stable/auto_examples/text/document_classification_20newsgroups.html#example-text-document-classification-20newsgroups-py
