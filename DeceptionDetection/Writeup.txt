@@ -1,6 +1,10 @@
 Part 1:
-I was labeling around %48 of the reviews correctly.
+With the original Naive Bayes from homework 2, I was labeling around %48 of the reviews correctly.
+
 
 
 Part 2:
 I tried to stem the words and the percentage I got correct barely improved (went up a %1 point).
+I tried to find patterns with POS tagging and according to this article (https://aclweb.org/anthology/N/N13/N13-1053.pdf)
+typically a fake reviews had more verbs relative to nouns.  I did find this but I was not sure
+what to do with that information.

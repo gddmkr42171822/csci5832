@@ -6,16 +6,17 @@ HW3 Deception Detection
 import re
 import math
 import random
-from porter2 import stem
 import sys
+import nltk
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn import svm
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import SVC
 
-# Words to remove that don't have any sentiment
-#stopList = ['the','and','a','was','to','i','in','of','is','it','you','we','they',
-#           'at','on', 'that', 'my', 'for', 'this']
-stopList = []
-
+inc = open('incorrect-answers.txt', 'w')
 def checkOutput(outputFile, answerFile):
-    inc = open('incorrect-answers.txt', 'a')
     wrongReviews = 0
     answers = {}
     output = {}
@@ -43,9 +44,11 @@ def checkOutput(outputFile, answerFile):
                 #print '{0} output {1} answer {2}'.format(key, output[key], answers[key])
                 #print "{0} is incorrect.".format(key)
     #print 'Number of wrong IDs: {0}'.format(wrongReviews)
-    inc.close()
     return wrongReviews
 
+
+VerbCounts = []
+NounCounts = []
 def wordCount(file):
     '''
     Return a dictionary of the word counts in a file
@@ -61,18 +64,29 @@ def wordCount(file):
         line = line.strip().split()
         # Remove the ID-.... from the line
         line = line[1:]
+        
+        '''
+        tagged = nltk.pos_tag(line)
+        counts = Counter(tag for word,tag in tagged)
+        verbCount = 0
+        nounCount = 0
+        for key in counts:
+            if 'VB' in key:
+                verbCount += counts[key]
+            elif 'NN' in key:
+                nounCount += counts[key]
+        
+        VerbCounts.append(verbCount)
+        NounCounts.append(nounCount)
+        '''
+            
         # Create a dictionary with the key being the word and the value being the count
         for word in line:
-            word = stem(word)
+            #word = stem(word)
             if word in d:
                 d[word] += 1
             else:
                 d[word] = 1
-    '''
-    # Remove any words from the stop list
-    for word in stopList:
-        d.pop(word)
-    '''
     f.close()
     return d        
 
@@ -91,13 +105,8 @@ def gatherReviews(file):
         line = line.split()
         # Put review ID in the dictionary as key and rest of the words of the review as value
         d[line[0]] = line[1:]
-        '''
-        # Remove words in the review from the stop list
-        cleanedList = [word for word in d[line[0]] if word not in stopList]
-        d[line[0]] = cleanedList
-        '''
     f.close()
-    d = stemReviews(d)
+    #d = stemReviews(d)
     return d
 
 def stemReviews(d):
@@ -181,20 +190,81 @@ def createCrossValidationFiles(n):
     # Write the training reviews to the training set file
     writeListToFile('truetrain-reviews.txt', trainingTrueReviews, False)
     writeListToFile('falsetrain-reviews.txt', trainingFalseReviews, False) 
+    
+def SVM():
+    t = gatherReviews('truetrain-reviews.txt')
+    f = gatherReviews('falsetrain-reviews.txt')
+    test = gatherReviews('test-reviews.txt')
+    testReviews = test.values()
+    testIDs = test.keys()
+    testIDs = [x.upper() for x in testIDs]
+    t = t.values()
+    f = f.values()
+    tstrings = []
+    fstrings = []
+    docs_test = []
+    for review in t:
+        review = ' '.join(review)
+        tstrings.append(review)
+    for review in f:
+        review = ' '.join(review)
+        fstrings.append(review)
+    for review in testReviews:
+        review = ' '.join(review)
+        docs_test.append(review)
+        
+    
+    tTargets = len(tstrings)*[1]
+    fTargets = len(fstrings)*[0]
+    reviews = tstrings+fstrings
+    targets = tTargets+fTargets
+    
+    text_clf = Pipeline([('vect', CountVectorizer()),
+                     ('tfidf', TfidfTransformer()),
+                     ('clf', SVC()),
+                     ])
+    
+    
+    count_vect = CountVectorizer()
+    X_train_counts = count_vect.fit_transform(reviews)
+    tfidf_transformer = TfidfTransformer()
+    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+    clf = SVC()
+    clf.fit(X_train_tfidf, targets)
+    
+    print clf.predict(docs_test)
+    #return predicted, testIDs        
+    
 
 
 def main():
     wrongReviews = 0.0
     n = 10
-    x = 100
+    x = 1
     for i in range(0,x):
         createCrossValidationFiles(n)
+        f = open('werthman-robert-assgn3-out.txt', 'w')
+        reviews, ids = SVM()
+        for id,review in zip(ids,reviews):
+            if review == 1:
+                f.write('{0}\tT\n'.format(id))
+            elif review == 0:
+                f.write('{0}\tF\n'.format(id))
+        f.close()
+        wrongReviews += checkOutput('werthman-robert-assgn3-out.txt','answers.txt') 
+    # For running training set as test set
+    totalTestReviews = (n+n)*x
+    numCorrectReviews = totalTestReviews-wrongReviews
+    print '{0} wrongly labeled reviews out of {1} total test reviews.'.format(wrongReviews, totalTestReviews)
+    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0) 
+    '''
         #createCrossValidationFiles(0)
         
         # Create a dictionary with all the words in the true review set
         trueWords = wordCount('truetrain-reviews.txt')
         # Create a dictionary with all the words in the false review set
         falseWords = wordCount('falsetrain-reviews.txt')
+
         # Create a dictionary of all the words in the training set
         vocabulary = trueWords.copy()
         vocabulary.update(falseWords)
@@ -230,7 +300,9 @@ def main():
     totalTestReviews = (n+n)*x
     numCorrectReviews = totalTestReviews-wrongReviews
     print '{0} wrongly labeled reviews out of {1} total test reviews.'.format(wrongReviews, totalTestReviews)
-    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0)  
+    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0) 
+    inc.close() 
+    '''
 
 if __name__ == '__main__':
     main()
