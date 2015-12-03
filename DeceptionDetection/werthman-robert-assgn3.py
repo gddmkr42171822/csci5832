@@ -179,9 +179,12 @@ def createCrossValidationFiles(n):
     
 def ScikitClassify():
     # Read in the test and training reviews
-    t = gatherReviews('truetrain-reviews.txt')
-    f = gatherReviews('falsetrain-reviews.txt')
-    test = gatherReviews('test-reviews.txt')
+    #t = gatherReviews('truetrain-reviews.txt')
+    #f = gatherReviews('falsetrain-reviews.txt')
+    #test = gatherReviews('test-reviews.txt')
+    t = gatherReviews('hotelT-train.txt')
+    f = gatherReviews('hotelF-train.txt')
+    test = gatherReviews('hotelDeceptionTest.txt')
     # Create lists of strings from those reviews instead
     # of lists of words
     testReviews = test.values()
@@ -269,20 +272,21 @@ def NaiveBayesClassify():
     f.close()    
 
 def main():
-    wrongReviews = 0.0
+    #wrongReviews = 0.0
     n = 10
-    x = 100
+    x = 1
     for i in range(0,x):
-        createCrossValidationFiles(n)
+        #createCrossValidationFiles(n)
+        
         ScikitClassify()
         #NaiveBayesClassify()
-        wrongReviews += checkOutput('werthman-robert-assgn3-out.txt','answers.txt') 
-    totalTestReviews = (n+n)*x
-    numCorrectReviews = totalTestReviews-wrongReviews
-    print '{0} wrongly labeled reviews out of {1} total test reviews.'.format(wrongReviews, totalTestReviews)
-    print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0)
+        #wrongReviews += checkOutput('werthman-robert-assgn3-out.txt','answers.txt') 
+    #totalTestReviews = (n+n)*x
+    #numCorrectReviews = totalTestReviews-wrongReviews
+    #print '{0} wrongly labeled reviews out of {1} total test reviews.'.format(wrongReviews, totalTestReviews)
+    #print 'Percent correct {0}'.format((numCorrectReviews/totalTestReviews)*100.0)
     # Close incorrect output file
-    inc.close() 
+    #inc.close() 
 
 if __name__ == '__main__':
     main()
