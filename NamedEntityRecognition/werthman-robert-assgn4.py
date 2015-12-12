@@ -86,9 +86,12 @@ def CalculateTransitionProbabilities():
 			transition_counts[transition] = 1
 	# Find the probabilities of the transitions by
 	# dividing the count of going from tag 1 to tag 2 by
-	# the count of tag 1
+	# the total number of occurrences of tag 1
 	for transition in transition_counts:
-		transition_probabilities[transition] = transition_counts[transition]/(tag_counts[transition[0]]*1.0)
+		if transition[0] in transition_probabilities:
+			transition_probabilities[transition[0]][transition[1]] = transition_counts[transition]/(tag_counts[transition[0]]*1.0)
+		else:
+			transition_probabilities[transition[0]] = {transition[1]:transition_counts[transition]/(tag_counts[transition[0]]*1.0)}
 
 def CalculateObservationProbability():
 	'''
@@ -96,7 +99,7 @@ def CalculateObservationProbability():
 	'''
 	tags = ['I','O','B']
 	for word in words:
-		probabilities_of_word_given_tag = []
+		probabilities_of_word_given_tag = {}
 		for tag in tags:
 			# Check if we have the word and tag combination in the our training set
 			if((word,tag) in word_with_tag_counts):
@@ -104,7 +107,7 @@ def CalculateObservationProbability():
 				# Get the probability based on the number of times the word occurs with the tag
 				# divided by the number of times the tag occurs
 				word_prob_with_tag = word_with_tag_count/(tag_counts[tag]*1.0)
-				probabilities_of_word_given_tag.append((tag,word_prob_with_tag))
+				probabilities_of_word_given_tag[tag] = word_prob_with_tag
 			else:
 				# The word is unknown so we need smoothing
 				pass
@@ -118,9 +121,9 @@ def main():
 	GetTagOrder(training_set)
 	CalculateTransitionProbabilities()
 	CalculateObservationProbability()
-	print observation_probabilities
-	print tag_order
-	print transition_probabilities
+	print 'Observation Probabilities',observation_probabilities
+	print 'Order of Tags',tag_order
+	print 'Transition Probabilities',transition_probabilities
 
 if __name__ == "__main__":
 	main()
