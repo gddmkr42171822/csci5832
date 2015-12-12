@@ -1,0 +1,11 @@
+bob	B
+is	O
+what	I
+yes	I
+why	B
+Today	B
+End	O
+Cool	O
+Cool	O
+yes	B
+nope	I
