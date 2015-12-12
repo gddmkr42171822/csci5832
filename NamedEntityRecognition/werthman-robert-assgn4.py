@@ -1,3 +1,16 @@
+'''
+Possible Transitions:
+b->i i->b(missing) o->b b->i i->i o->o b->b(missing) i->o o->i(can't happen)
+'''
+
+
+words = {}
+def GetWords(txt_file):
+	with open(txt_file,'r') as f:
+		for line in f:
+			line = line.strip().split('\t')
+			if(len(line)>1):
+				words[line[0]] = 0
 
 word_with_tag_counts = {}
 def GetWordWithTagCounts(txt_file):
@@ -24,6 +37,40 @@ def GetTagCounts(txt_file):
 					tag_counts[tag] += 1
 				else:
 					tag_counts[tag] = 1
+tag_order = []
+def GetTagOrder(txt_file):
+	with open(txt_file,'r') as f:
+		for line in f:
+			line = line.strip().split('\t')
+			if(len(line)>1):
+				tag = line[1]
+				tag_order.append(tag)
+
+transitions = []
+def GetTransitions(txt_file):
+	with open(txt_file,'r') as f:
+		for line in f:
+			line = line.strip().split('\t')
+			if(len(line)>1):
+				tag = line[1]
+				transitions.append(tag)
+
+transition_probabilities = {}
+def CalculateTransitionProbabilities():
+	transition_counts = {}
+	n = len(transitions)
+	# Find the counts of the transitions
+	for i in range(0,n-2):
+		transition = (transitions[i],transitions[i+1])
+		if transition in transition_counts:
+			transition_counts[transition] += 1
+		else:
+			transition_counts[transition] = 1
+	# Find the probabilities of the transitions by
+	# dividing the count of going from tag 1 to tag 2 by
+	# the count of tag 1
+	for transition in transition_counts:
+		transition_probabilities[transition] = transition_counts[transition]/(tag_counts[transition[0]]*1.0)
 
 def CalculateObservationProbability(word):
 	probabilities_of_word_given_tag = []
@@ -39,13 +86,22 @@ def CalculateObservationProbability(word):
 		else:
 			# The word is unknown so we need smoothing
 			pass
-		# Return the tag with the highest probability
+	# Return the tag with the highest probability??
+	return probabilities_of_word_given_tag
 
 def main():
+	observation_probabilities = {}
 	training_set = 'gene.train.txt'
 	GetWordWithTagCounts(training_set)
 	GetTagCounts(training_set)
-	CalculateObservationProbability('the')
-
+	GetWords(training_set)
+	GetTransitions(training_set)
+	CalculateTransitionProbabilities()
+	# Get the observation probabilities for each word
+	for word in words:
+		observation_probabilities[word] = CalculateObservationProbability(word)
+	#print observation_probabilities
+	#print transitions
+	#print transition_probabilities
 if __name__ == "__main__":
 	main()
