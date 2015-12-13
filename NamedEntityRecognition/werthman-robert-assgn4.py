@@ -28,7 +28,7 @@ observation_probabilities = {}
 # Probability of transitioning from one tag to another
 transition_probabilities = {}
 # List of the tags in the order they occurred in the file
-tag_order = []
+tag_sequence = []
 # Total number of occurrences for each tag
 tag_counts = {}
 # Total occurence of a word with a tag 
@@ -93,7 +93,7 @@ def GetTagOrder(txt_file):
 			line = line.strip().split('\t')
 			if(len(line)>1):
 				tag = line[1]
-				tag_order.append(tag)
+				tag_sequence.append(tag)
 
 def GetObservationSequence(txt_file):
 	'''
@@ -113,10 +113,10 @@ def CalculateTransitionProbabilities():
 	Finds the probability of a tag coming after another tag.
 	'''
 	transition_counts = {}
-	n = len(tag_order)
+	n = len(tag_sequence)
 	# Find the counts of the transitions
-	for i in range(0,n-2):
-		transition = (tag_order[i],tag_order[i+1])
+	for i in range(0,n-1):
+		transition = (tag_sequence[i],tag_sequence[i+1])
 		if transition in transition_counts:
 			transition_counts[transition] += 1
 		else:
@@ -130,12 +130,13 @@ def CalculateTransitionProbabilities():
 		else:
 			transition_probabilities[transition[1]] = {transition[0]:transition_counts[transition]/(tag_counts[transition[0]]*1.0)}
 	# Add the probabilities of the 'start' and 'end' states???
-	transition_probabilities['I']['start'] = 1.0
-	transition_probabilities['O']['start'] = 1.0
-	transition_probabilities['B']['start'] = 1.0
-	transition_probabilities['I']['end'] = 1.0
-	transition_probabilities['O']['end'] = 1.0
-	transition_probabilities['B']['end'] = 1.0
+	# Not necessary just smoothed them to 1
+	#transition_probabilities['I']['start'] = 1.0
+	#transition_probabilities['O']['start'] = 1.0
+	#transition_probabilities['B']['start'] = 1.0
+	#transition_probabilities['end']['I'] = 1.0
+	#transition_probabilities['end']['O'] = 1.0
+	#transition_probabilities['end']['B'] = 1.0
 
 
 def CalculateObservationProbability():
@@ -153,8 +154,10 @@ def CalculateObservationProbability():
 				word_prob_with_tag = word_with_tag_count/(tag_counts[tag]*1.0)
 				probabilities_of_word_given_tag[tag] = word_prob_with_tag
 			else:
+				pass
 				# The word and tag combination is unknown so we need smoothing???
-				probabilities_of_word_given_tag[tag] = 1.0
+				# Taken care of in viterbi
+				#probabilities_of_word_given_tag[tag] = 1.0
 		observation_probabilities[word] = probabilities_of_word_given_tag
 
 def Viterbi(T,N):
@@ -162,6 +165,8 @@ def Viterbi(T,N):
 	T is the number of observations/length of sequence (words)
 	N is the number of hidden states (tags)
 	'''
+	transition_prob = 0.0
+	observation_prob = 0.0
 	# viterbi matrix
 	# number of columns is the number of observations (words)
 	# number of rows is the number of hidden states (tags)
@@ -170,24 +175,73 @@ def Viterbi(T,N):
 	backpointer_matrix = [[0 for column in range(len(T))] for row in range(len(N))]
 	# Initialization
 	for state in range(len(N)):
-		viterbi_matrix[state][0] = math.log(transition_probabilities[N[state]]['start'])+math.log(observation_probabilities[observation_sequence[0]][N[state]])
-		backpointer_matrix[state][0] = 0
-	# Recursion
+		# Smoothing
+		# Check if we have seen the word
+		if observation_sequence[0] in observation_probabilities:
+			# If we have seen this word with this tag
+			if N[state] in observation_probabilities[observation_sequence[0]]:
+				observation_prob = observation_probabilities[observation_sequence[0]][N[state]]
+			else:
+				# If we haven't seen the tag we are looking at with this word
+				observation_prob = 0.1
+		else:
+			# If we have not seen this word
+			observation_prob = 0.1
+		viterbi_matrix[state][0] = math.log(1)+math.log(observation_prob)
+		backpointer_matrix[state][0] = 0.0
+	# Recursion 
 	for observation in range(1,len(T)):
 		for state in range(len(N)):
+			print 'Observation',observation
+			print 'State',N[state]
 			# Look at the previous column and get the max prob
 			# and associated tag
 			previous_column_probs = []
 			for previous_column_state in range(len(N)):
+				# Iterate through each row int he prevoius column and add the probabilities to a list
 				previous_column_probs.append(viterbi_matrix[previous_column_state][observation-1])
+			# Find the max of the list and this will be the max prob of the previous column
 			previous_column_max = max(previous_column_probs)
 			previous_column_max_tag = previous_column_probs.index(previous_column_max)
+			# Check if we have a transition probability for this transition (smoothing)
+			if N[state] in transition_probabilities:
+				# If we have a transition probability from the previous tag to the current tag
+				if N[previous_column_max_tag] in transition_probabilities[N[state]]:
+					transition_prob = transition_probabilities[N[state]][N[previous_column_max_tag]]
+				else:
+					transition_prob = 0.1
+			else:
+				transition_prob = 0.1
+			# Check if we have an observation probability for the observation (smoothing)
+			# If we have seen the word in the training set
+			if observation_sequence[observation] in observation_probabilities:
+				# If we have seen the word with a the tag in the training set
+				if N[state] in observation_probabilities[observation_sequence[observation]]:
+					observation_prob = observation_probabilities[observation_sequence[observation]][N[state]]
+				else:
+					# If we have seen the word but not the tag
+					observation_prob = 0.1
+			else:
+				# If we have not seen the word
+				observation_prob = 0.1
 			viterbi_matrix[state][observation] = previous_column_max \
-												+math.log(transition_probabilities[N[state]][N[previous_column_max_tag]]) \
-												+math.log(observation_probabilities[observation_sequence[observation]][N[state]])
-
-	# Termination
-	print viterbi_matrix
+												+math.log(transition_prob) \
+												+math.log(observation_prob)
+			backpointer_matrix[state][observation] = previous_column_max+math.log(transition_prob) 
+	# Termination 
+	# Back through the backpointer matrix and find the maxes for each observation
+	# This will give the best tag backtrace
+	backtrace = []
+	for observation in range(0,len(T)):
+		max_prob_per_observation = []
+		for state in range(len(N)):
+			max_prob_per_observation.append(backpointer_matrix[state][observation])
+		max_prob = max(max_prob_per_observation)
+		max_prob_tag = max_prob_per_observation.index(max_prob)
+		backtrace.append((N[max_prob_tag],max_prob))
+	print 'Viterbi',viterbi_matrix
+	print 'Backpointer',backpointer_matrix
+	print 'Backtrace',backtrace
 
 
 def main():
@@ -199,11 +253,11 @@ def main():
 	GetObservationSequence(training_set)
 	CalculateTransitionProbabilities()
 	CalculateObservationProbability()
-	#Viterbi(observation_sequence,tags)
-	#print 'Observation Probabilities',observation_probabilities
-	#print 'Order of Tags',tag_order
+	Viterbi(observation_sequence,tags)
+	print 'Observation Probabilities',observation_probabilities
+	print 'Tag/state sequence',tag_sequence
+	print 'Observation Sequence', observation_sequence
 	print 'Transition Probabilities',transition_probabilities
-	#print 'Observation Sequence', observation_sequence
 
 if __name__ == "__main__":
 	main()
