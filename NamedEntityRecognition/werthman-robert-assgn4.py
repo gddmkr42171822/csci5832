@@ -1,7 +1,27 @@
 '''
+Hidden Markov Models:
+----------------------
+Hidden states: tags I, O, B
+
+Observations: words or vocabulary
+
+Transition probabilities: 
+	probability of transitioning between states
+	probability of of I given B or B given O
+	A = {aij}
+
+Observation likelihoods: 
+	probability of word given that the tag is I or O or B
+
+Special initial probability vector
+	what is the probability of starting a sequence in a certain state
+	pi 
+
 Possible Transitions:
-b->i i->b(missing) o->b b->i i->i o->o b->b(missing) i->o o->i(can't happen)
+----------------------
+b->i i->b o->b b->i i->i o->o b->b i->o o->i
 '''
+import math
 
 # Probability of a word occurring with a specific tag
 observation_probabilities = {}
@@ -15,6 +35,10 @@ tag_counts = {}
 word_with_tag_counts = {}
 # Dictionary of words found in the text
 words = {}
+# Number of possible states/tags
+tags = ['I','O','B']
+# List of the order of the words in the text
+observation_sequence = []
 
 def GetWords(txt_file):
 	'''
@@ -71,6 +95,19 @@ def GetTagOrder(txt_file):
 				tag = line[1]
 				tag_order.append(tag)
 
+def GetObservationSequence(txt_file):
+	'''
+	Create a list of the order observations (words) 
+	as they appear in the text.
+	'''
+	with open(txt_file,'r') as f:
+		for line in f:
+			line = line.strip().split('\t')
+			if(len(line)>1):
+				observation = line[0]
+				observation_sequence.append(observation)
+
+
 def CalculateTransitionProbabilities():
 	'''
 	Finds the probability of a tag coming after another tag.
@@ -89,15 +126,22 @@ def CalculateTransitionProbabilities():
 	# the total number of occurrences of tag 1
 	for transition in transition_counts:
 		if transition[0] in transition_probabilities:
-			transition_probabilities[transition[0]][transition[1]] = transition_counts[transition]/(tag_counts[transition[0]]*1.0)
+			transition_probabilities[transition[1]][transition[0]] = transition_counts[transition]/(tag_counts[transition[0]]*1.0)
 		else:
-			transition_probabilities[transition[0]] = {transition[1]:transition_counts[transition]/(tag_counts[transition[0]]*1.0)}
+			transition_probabilities[transition[1]] = {transition[0]:transition_counts[transition]/(tag_counts[transition[0]]*1.0)}
+	# Add the probabilities of the 'start' and 'end' states???
+	transition_probabilities['I']['start'] = 1.0
+	transition_probabilities['O']['start'] = 1.0
+	transition_probabilities['B']['start'] = 1.0
+	transition_probabilities['I']['end'] = 1.0
+	transition_probabilities['O']['end'] = 1.0
+	transition_probabilities['B']['end'] = 1.0
+
 
 def CalculateObservationProbability():
 	'''
 	Finds the probability of a word occurring with a tag.
 	'''
-	tags = ['I','O','B']
 	for word in words:
 		probabilities_of_word_given_tag = {}
 		for tag in tags:
@@ -109,9 +153,42 @@ def CalculateObservationProbability():
 				word_prob_with_tag = word_with_tag_count/(tag_counts[tag]*1.0)
 				probabilities_of_word_given_tag[tag] = word_prob_with_tag
 			else:
-				# The word is unknown so we need smoothing
-				pass
+				# The word and tag combination is unknown so we need smoothing???
+				probabilities_of_word_given_tag[tag] = 1.0
 		observation_probabilities[word] = probabilities_of_word_given_tag
+
+def Viterbi(T,N):
+	'''
+	T is the number of observations/length of sequence (words)
+	N is the number of hidden states (tags)
+	'''
+	# viterbi matrix
+	# number of columns is the number of observations (words)
+	# number of rows is the number of hidden states (tags)
+	# this matrix is referenced by [row][column]
+	viterbi_matrix = [[0 for column in range(len(T))] for row in range(len(N))]
+	backpointer_matrix = [[0 for column in range(len(T))] for row in range(len(N))]
+	# Initialization
+	for state in range(len(N)):
+		viterbi_matrix[state][0] = math.log(transition_probabilities[N[state]]['start'])+math.log(observation_probabilities[observation_sequence[0]][N[state]])
+		backpointer_matrix[state][0] = 0
+	# Recursion
+	for observation in range(1,len(T)):
+		for state in range(len(N)):
+			# Look at the previous column and get the max prob
+			# and associated tag
+			previous_column_probs = []
+			for previous_column_state in range(len(N)):
+				previous_column_probs.append(viterbi_matrix[previous_column_state][observation-1])
+			previous_column_max = max(previous_column_probs)
+			previous_column_max_tag = previous_column_probs.index(previous_column_max)
+			viterbi_matrix[state][observation] = previous_column_max \
+												+math.log(transition_probabilities[N[state]][N[previous_column_max_tag]]) \
+												+math.log(observation_probabilities[observation_sequence[observation]][N[state]])
+
+	# Termination
+	print viterbi_matrix
+
 
 def main():
 	training_set = 'test_tags.txt'
@@ -119,11 +196,14 @@ def main():
 	GetTagCounts(training_set)
 	GetWords(training_set)
 	GetTagOrder(training_set)
+	GetObservationSequence(training_set)
 	CalculateTransitionProbabilities()
 	CalculateObservationProbability()
-	print 'Observation Probabilities',observation_probabilities
-	print 'Order of Tags',tag_order
+	#Viterbi(observation_sequence,tags)
+	#print 'Observation Probabilities',observation_probabilities
+	#print 'Order of Tags',tag_order
 	print 'Transition Probabilities',transition_probabilities
+	#print 'Observation Sequence', observation_sequence
 
 if __name__ == "__main__":
 	main()
