@@ -102,7 +102,8 @@ def GetObservationSequenceTest(txt_file):
 	'''
 	with open(txt_file,'r') as f:
 		for line in f:
-			line = line.strip()
+			if not line.isspace():
+				line = line.strip()
 			observation = line
 			observation_sequence.append(observation)
 
@@ -228,6 +229,18 @@ def Viterbi(T,N):
 		backtrace.append(N[max_prob_tag])
 	return backtrace
 
+def WriteOutput(words,backtrace):
+	output_file = 'werthman-assgn4-out.txt'
+	f = open(output_file,'w')
+	for word, tag in zip(words,backtrace):
+		# if the word is a space or newline don't put a tag there
+		if word=='\n':
+			f.write('{0}'.format(word))
+		elif word==' ':
+			f.write('{0}\n'.format(word))
+		else:
+			f.write('{0}\t{1}\n'.format(word,tag))
+	f.close()
 
 def main():
 	training_set = 'gene.train.txt'
@@ -242,9 +255,12 @@ def main():
 	backtrace = Viterbi(observation_sequence,tags)
 	#print 'Observation Probabilities',observation_probabilities
 	#print 'Tag/state sequence',tag_sequence
-	print 'Observation Sequence', observation_sequence
-	print 'Transition Probabilities',transition_probabilities
+	#print 'Observation Sequence', observation_sequence
+	#print 'Transition Probabilities',transition_probabilities
 	print 'Backtrace', backtrace
+
+	WriteOutput(observation_sequence,backtrace)
+
 
 if __name__ == "__main__":
 	main()
