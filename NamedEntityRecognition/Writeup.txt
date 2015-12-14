@@ -1,6 +1,11 @@
-Training:
-----------
-I used gene.train.txt as my training set and then created another file with the words 
+Robert Werthman 
+CSCI 5832
+Assignment 4
+Name Entity Recognition
+
+Initial Testing:
+---------------
+I used gene.train.txt as my training set and then created another file (test_tags.txt) with the words 
 from gene.train.txt but not the tags.  This I used as my test set.
 
 Results when not using log probabilities (multiplying the probs):

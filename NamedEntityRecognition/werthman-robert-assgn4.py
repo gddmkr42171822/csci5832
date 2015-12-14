@@ -1,4 +1,9 @@
 '''
+Robert Werthman 
+CSCI 5832
+Assignment 4
+Name Entity Recognition
+
 Hidden Markov Models:
 ----------------------
 Hidden states: tags I, O, B
@@ -7,15 +12,11 @@ Observations: words or vocabulary
 
 Transition probabilities: 
 	probability of transitioning between states
-	probability of of I given B or B given O
+	Example: probability of I given B or B given O
 	A = {aij}
 
 Observation likelihoods: 
-	probability of word given that the tag is I or O or B
-
-Special initial probability vector
-	what is the probability of starting a sequence in a certain state
-	pi 
+	Example: probability of word given that the tag is I or O or B
 
 Possible Transitions:
 ----------------------
