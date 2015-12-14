@@ -110,11 +110,10 @@ def GetObservationSequenceTest(txt_file):
 
 def CalculateTransitionProbabilities():
 	'''
-	Finds the probability of a tag coming after another tag.
+	Finds the probability of a tag coming after another tag in the training set.
 	'''
 	transition_counts = {}
 	n = len(tag_sequence)
-	print n
 	# Find the counts of the transitions in the training data
 	for i in range(0,n-1):
 		transition = (tag_sequence[i],tag_sequence[i+1])
@@ -133,7 +132,7 @@ def CalculateTransitionProbabilities():
 
 def CalculateObservationProbability():
 	'''
-	Finds the probability of a word occurring with a tag in the training set.
+	Finds the probability of a word given a tag in the training set.
 	'''
 	for word in training_vocabulary:
 		probabilities_of_word_given_tag = {}
@@ -163,29 +162,27 @@ def Viterbi(T,N):
 	# number of columns is the number of observations (words)
 	# number of rows is the number of hidden states (tags)
 	# this matrix is referenced by [row][column]
-	# ---create a path probability matrix viterbi[N+2,T]---
+	# ---create a path probability matrix viterbi[N,T]---
 	viterbi_matrix = [[0 for column in range(len(T))] for row in range(len(N))]
 	backpointer_matrix = [[0 for column in range(len(T))] for row in range(len(N))]
 	# Initialization Step
 	# ---for each state s from 1 to N do---
 	for state in range(len(N)):
 		# Smoothing
-		# Check if we have seen the word
-		if T[0] in observation_probabilities:
-			# If we have seen this word with this tag
-			if N[state] in observation_probabilities[T[0]]:
-				observation_prob = observation_probabilities[T[0]][N[state]]
-			else:
-				# If we have seen this word but not with this tag/state
-				observation_prob = 1.0*(10**(-15))
+		# Check if we have seen the word with this tag in the training set
+		if T[0] in observation_probabilities and N[state] in observation_probabilities[T[0]]:
+			observation_prob = observation_probabilities[T[0]][N[state]]
 		else:
-			# If we have not seen this word at all
-			observation_prob = 1.0*(10**(-15))
+			# If we have not seen this word or the word with this tag
+			#observation_prob = 1.0*(10**(-15))
+			observation_prob = 0.0
+		# Arbitrarily assign 1.0 to transtion from 'start' to tag
 		transition_prob = 1.0
 		# ---viterbi[s,1] = a0,s*bs(o1)---
-		viterbi_matrix[state][0] = math.log(transition_prob)+math.log(observation_prob)
+		#viterbi_matrix[state][0] = math.log(transition_prob)+math.log(observation_prob)
+		viterbi_matrix[state][0] = transition_prob*observation_prob
 		# ---backpointer[s,1] = 0--
-		backpointer_matrix[state][0] = 0.0
+		backpointer_matrix[state][0] = transition_prob*observation_prob
 	# Recursion Step
 	# ---for each time step t from 2 to T do---
 	for observation in range(1,len(T)):
@@ -193,36 +190,31 @@ def Viterbi(T,N):
 		for state in range(len(N)):
 			previous_column_probs = []
 			previous_column_transition_probs = []
-			# Go through the previous column and states and get the previous viterbi and transitions probabilities
+			# Go through the previous column and states and get the previous viterbi and transition probabilities
 			for previous_column_state in range(len(N)):
 				# Iterate through each row in the prevoius column and get the probabilities
 				previous_column_probs.append(viterbi_matrix[previous_column_state][observation-1])
 				# Also get the transition probabilites of the previous state/tag to the current state/tag
-				if N[state] in transition_probabilities:
-					# If we have a transition probability from the previous state/tag to the current state/tag
-					if N[previous_column_state] in transition_probabilities[N[state]]:
-						transition_prob = transition_probabilities[N[state]][N[previous_column_state]]
-					else:
-						transition_prob = 1.0*(10**(-15))
+				# If we have a transition probability from the previous state/tag to the current state/tag
+				if N[state] in transition_probabilities and N[previous_column_state] in transition_probabilities[N[state]]:
+					transition_prob = transition_probabilities[N[state]][N[previous_column_state]]
 				else:
-					transition_prob = 1.0*(10**(-15))
+					#transition_prob = 1.0*(10**(-15))
+					transition_prob = 0.0
 				previous_column_transition_probs.append(transition_prob)
-			# Check if we have an observation probability for the observation (smoothing)
-			# If we have seen the word in the training set
-			if T[observation] in observation_probabilities:
-				# If we have seen the word with this tag in the training set
-				if N[state] in observation_probabilities[T[observation]]:
-					observation_prob = observation_probabilities[T[observation]][N[state]]
-				else:
-					# If we have seen this word but not with this tag/state
-					observation_prob = 1.0*(10**(-15))
+			# Check if we have an observation probability for the current observation (smoothing)
+			# If we have seen the word with this tag in the training set
+			if T[observation] in observation_probabilities and N[state] in observation_probabilities[T[observation]]:
+				observation_prob = observation_probabilities[T[observation]][N[state]]
 			else:
-				# If we have not seen the word at all
-				observation_prob = 1.0*(10**(-15))
+				# If we have not seen the word or the word with this tag in the training set
+				#observation_prob = 1.0*(10**(-15))
+				observation_prob = 0.0
 			# Find probability of the current state = previous_viterbi_prob*transition_prob*observation_prob
 			# In this case we use log so we do addition instead of multiplication
 			# ---viterbi[s,t]=max(viterbi[s0,t-1]*as0,s*bs(ot))---
-			previous_column_state_probs = [x+math.log(y)+math.log(observation_prob) for x,y in zip(previous_column_probs,previous_column_transition_probs)]
+			#previous_column_state_probs = [x+math.log(y)+math.log(observation_prob) for x,y in zip(previous_column_probs,previous_column_transition_probs)]
+			previous_column_state_probs = [previous_prob*transition_prob*observation_prob for previous_prob,transition_prob in zip(previous_column_probs,previous_column_transition_probs)]
 			current_column_max = max(previous_column_state_probs)
 			viterbi_matrix[state][observation] = current_column_max
 			# ---backpointer[s,t]=argmax(viterbi[s0,t-1]*as0,s*bs(ot))---
@@ -233,12 +225,15 @@ def Viterbi(T,N):
 	backtrace = []
 	# For each column/observation/word
 	for observation in range(0,len(T)):
-		prob_observation_per_state = []
+		observation_prob_per_state = []
 		# For each row/state/tag
 		for state in range(len(N)):
-			prob_observation_per_state.append(backpointer_matrix[state][observation])
-		max_prob = max(prob_observation_per_state)
-		max_prob_tag = prob_observation_per_state.index(max_prob)
+			observation_prob_per_state.append(backpointer_matrix[state][observation])
+		# Find the max probability for the observation/column
+		max_prob = max(observation_prob_per_state)
+		# Find which tag that max probability belongs to
+		max_prob_tag = observation_prob_per_state.index(max_prob)
+		# Add that tag to the best tag backtrace
 		backtrace.append(N[max_prob_tag])
 	return backtrace
 
@@ -264,10 +259,11 @@ def main():
 	GetObservationSequenceTest(test_set)
 	CalculateTransitionProbabilities()
 	CalculateObservationProbability()
+
 	for word in observation_sequence:
 		sequence.append(word)
-		# If the end of a sentence most of the time
-		if sequence[-1] == '.':
+		# If at the end of a sentence most of the time
+		if sequence[-1] == '\n' and sequence[-2] =='.':
 			#backtrace.extend(Viterbi(sequence,tags))
 			backtrace = Viterbi(sequence,tags)
 			WriteOutput(sequence,backtrace)
