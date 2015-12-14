@@ -22,6 +22,7 @@ Possible Transitions:
 b->i i->b o->b b->i i->i o->o b->b i->o o->i
 '''
 import math
+import sys
 
 # Probability of a word occurring with a specific tag
 observation_probabilities = {}
@@ -102,7 +103,7 @@ def GetObservationSequenceTest(txt_file):
 	'''
 	with open(txt_file,'r') as f:
 		for line in f:
-			if not line.isspace():
+			if line != '\n':
 				line = line.strip()
 			observation = line
 			observation_sequence.append(observation)
@@ -152,8 +153,8 @@ def CalculateObservationProbability():
 
 def Viterbi(T,N):
 	'''
-	T is the number of observations/length of sequence (words)
-	N is the number of hidden states (tags)
+	T is a list of observations/length of sequence (words)
+	N is a list of of hidden states (tags)
 	'''
 	transition_prob = 0.0
 	observation_prob = 0.0
@@ -167,17 +168,18 @@ def Viterbi(T,N):
 	for state in range(len(N)):
 		# Smoothing
 		# Check if we have seen the word
-		if observation_sequence[0] in observation_probabilities:
+		if T[0] in observation_probabilities:
 			# If we have seen this word with this tag
-			if N[state] in observation_probabilities[observation_sequence[0]]:
-				observation_prob = observation_probabilities[observation_sequence[0]][N[state]]
+			if N[state] in observation_probabilities[T[0]]:
+				observation_prob = observation_probabilities[T[0]][N[state]]
 			else:
 				# If we haven't seen the tag we are looking at with this word
 				observation_prob = 1.0*(10**(-15))
 		else:
 			# If we have not seen this word
 			observation_prob = 1.0*(10**(-15))
-		viterbi_matrix[state][0] = math.log(1)+math.log(observation_prob)
+		transition_prob = 1
+		viterbi_matrix[state][0] = math.log(transition_prob)+math.log(observation_prob)
 		backpointer_matrix[state][0] = 0.0
 	# Recursion 
 	for observation in range(1,len(T)):
@@ -199,10 +201,10 @@ def Viterbi(T,N):
 				previous_column_transition_probs.append(transition_prob)
 			# Check if we have an observation probability for the observation (smoothing)
 			# If we have seen the word in the training set
-			if observation_sequence[observation] in observation_probabilities:
+			if T[observation] in observation_probabilities:
 				# If we have seen the word with a the tag in the training set
-				if N[state] in observation_probabilities[observation_sequence[observation]]:
-					observation_prob = observation_probabilities[observation_sequence[observation]][N[state]]
+				if N[state] in observation_probabilities[T[observation]]:
+					observation_prob = observation_probabilities[T[observation]][N[state]]
 				else:
 					# If we have seen the word but not the tag
 					observation_prob = 1.0*(10**(-15))
@@ -236,13 +238,12 @@ def WriteOutput(words,backtrace):
 		# if the word is a space or newline don't put a tag there
 		if word=='\n':
 			f.write('{0}'.format(word))
-		elif word==' ':
-			f.write('{0}\n'.format(word))
 		else:
 			f.write('{0}\t{1}\n'.format(word,tag))
 	f.close()
 
 def main():
+	backtrace = []
 	training_set = 'gene.train.txt'
 	test_set = 'test_tags.txt'
 	GetWordWithTagCountsTraining(training_set)
@@ -252,14 +253,22 @@ def main():
 	GetObservationSequenceTest(test_set)
 	CalculateTransitionProbabilities()
 	CalculateObservationProbability()
-	backtrace = Viterbi(observation_sequence,tags)
+	total_sequence = []
+	sequence = []
+	for word in observation_sequence:
+		sequence.append(word)
+		# If the end of a sentence
+		if sequence[-1] == '.':
+			backtrace.extend(Viterbi(sequence,tags))
+			sequence = []
+	#backtrace = Viterbi(observation_sequence,tags)
+	WriteOutput(observation_sequence,backtrace)
+
 	#print 'Observation Probabilities',observation_probabilities
 	#print 'Tag/state sequence',tag_sequence
 	#print 'Observation Sequence', observation_sequence
 	#print 'Transition Probabilities',transition_probabilities
-	print 'Backtrace', backtrace
-
-	WriteOutput(observation_sequence,backtrace)
+	#print 'Backtrace', backtrace
 
 
 if __name__ == "__main__":
