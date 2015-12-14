@@ -1,0 +1,18 @@
+Training:
+----------
+I used gene.train.txt as my training set and then created another file with the words 
+from gene.train.txt but not the tags.  This I used as my test set.
+
+Results when not using log probabilities:
+------------------------------------------
+16637  entities in gold standard.
+12480  total entities found.
+8475  of which were correct.
+Precision:  0.679086538462 Recall:  0.509406744004 F1-measure:  0.582134148436
+
+Results when using log probabilities:
+--------------------------------------
+16637  entities in gold standard.
+13501  total entities found.
+9156  of which were correct.
+Precision:  0.67817198726 Recall:  0.550339604496 F1-measure:  0.607605016922

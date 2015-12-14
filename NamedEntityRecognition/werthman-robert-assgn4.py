@@ -174,15 +174,16 @@ def Viterbi(T,N):
 			observation_prob = observation_probabilities[T[0]][N[state]]
 		else:
 			# If we have not seen this word or the word with this tag
-			#observation_prob = 1.0*(10**(-15))
-			observation_prob = 0.0
+			observation_prob = 1.0*(10**(-15))
+			#observation_prob = 0.0
 		# Arbitrarily assign 1.0 to transtion from 'start' to tag
 		transition_prob = 1.0
 		# ---viterbi[s,1] = a0,s*bs(o1)---
-		#viterbi_matrix[state][0] = math.log(transition_prob)+math.log(observation_prob)
-		viterbi_matrix[state][0] = transition_prob*observation_prob
+		viterbi_matrix[state][0] = math.log(transition_prob)+math.log(observation_prob)
+		#viterbi_matrix[state][0] = transition_prob*observation_prob
 		# ---backpointer[s,1] = 0--
-		backpointer_matrix[state][0] = transition_prob*observation_prob
+		#backpointer_matrix[state][0] = transition_prob*observation_prob
+		backpointer_matrix[state][0] = math.log(transition_prob)+math.log(observation_prob)
 	# Recursion Step
 	# ---for each time step t from 2 to T do---
 	for observation in range(1,len(T)):
@@ -199,8 +200,8 @@ def Viterbi(T,N):
 				if N[state] in transition_probabilities and N[previous_column_state] in transition_probabilities[N[state]]:
 					transition_prob = transition_probabilities[N[state]][N[previous_column_state]]
 				else:
-					#transition_prob = 1.0*(10**(-15))
-					transition_prob = 0.0
+					transition_prob = 1.0*(10**(-15))
+					#transition_prob = 0.0
 				previous_column_transition_probs.append(transition_prob)
 			# Check if we have an observation probability for the current observation (smoothing)
 			# If we have seen the word with this tag in the training set
@@ -208,13 +209,13 @@ def Viterbi(T,N):
 				observation_prob = observation_probabilities[T[observation]][N[state]]
 			else:
 				# If we have not seen the word or the word with this tag in the training set
-				#observation_prob = 1.0*(10**(-15))
-				observation_prob = 0.0
+				observation_prob = 1.0*(10**(-15))
+				#observation_prob = 0.0
 			# Find probability of the current state = previous_viterbi_prob*transition_prob*observation_prob
 			# In this case we use log so we do addition instead of multiplication
 			# ---viterbi[s,t]=max(viterbi[s0,t-1]*as0,s*bs(ot))---
-			#previous_column_state_probs = [x+math.log(y)+math.log(observation_prob) for x,y in zip(previous_column_probs,previous_column_transition_probs)]
-			previous_column_state_probs = [previous_prob*transition_prob*observation_prob for previous_prob,transition_prob in zip(previous_column_probs,previous_column_transition_probs)]
+			previous_column_state_probs = [previous_prob+math.log(transition_prob)+math.log(observation_prob) for previous_prob,transition_prob in zip(previous_column_probs,previous_column_transition_probs)]
+			#previous_column_state_probs = [previous_prob*transition_prob*observation_prob for previous_prob,transition_prob in zip(previous_column_probs,previous_column_transition_probs)]
 			current_column_max = max(previous_column_state_probs)
 			viterbi_matrix[state][observation] = current_column_max
 			# ---backpointer[s,t]=argmax(viterbi[s0,t-1]*as0,s*bs(ot))---
