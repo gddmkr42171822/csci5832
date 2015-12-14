@@ -1,2 +1,4 @@
 bob	B
 is	O
+time	B
+line	I
