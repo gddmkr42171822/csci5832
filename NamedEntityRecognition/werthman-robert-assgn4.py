@@ -252,7 +252,7 @@ def WriteOutput(words,backtrace):
 def main():
 	sequence = []
 	training_set = 'gene.train.txt'
-	test_set = 'test_tags.txt'
+	test_set = 'HW4-test.txt'
 	GetWordWithTagCountsTraining(training_set)
 	GetTagCountsTraining(training_set)
 	GetVocabTraining(training_set)

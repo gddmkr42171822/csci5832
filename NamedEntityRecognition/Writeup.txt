@@ -8,6 +8,13 @@ Initial Testing:
 I used gene.train.txt as my training set and then created another file (test_tags.txt) with the words 
 from gene.train.txt but not the tags.  This I used as my test set.
 
+I tried to take into account unknown words words in the both the training and test
+set.  In the training set I made unknown words any word that occurred less than 5 times.
+I assumed this was typically a noun and therefore should be labeled with a 'B' at the end
+of viterbi.  For the test set, I chose any word that did not occur in the training set as 
+unknown and made sure the 'B' tag had the highest probability for that word.  This ended up
+hurting my results and making precision, recall, and f1 worse.
+
 Results when not using log probabilities (multiplying the probs):
 ------------------------------------------
 16637  entities in gold standard.
