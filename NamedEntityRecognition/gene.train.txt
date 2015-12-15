@@ -6,7 +6,6 @@ and	O
 5	B
 -	I
 nucleotidase	I
-
 Pharmacologic	O
 aspects	O
 of	O
@@ -399993,4 +399992,3 @@ promoters	I
 were	O
 studied	O
 .	O
-

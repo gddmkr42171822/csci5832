@@ -94,8 +94,7 @@ def GetTagSequenceTraining(txt_file):
 		for line in f:
 			line = line.strip().split('\t')
 			if(len(line)>1):
-				tag = line[1]
-				tag_sequence.append(tag)
+				tag_sequence.append(line[1])
 
 def GetObservationSequenceTest(txt_file):
 	'''
@@ -139,21 +138,18 @@ def CalculateObservationProbability():
 		probabilities_of_word_given_tag = {}
 		for tag in tags:
 			# Check if we have the word and tag combination in the our training set
-			if((word,tag) in word_with_tag_counts):
+			if (word,tag) in word_with_tag_counts:
 				word_with_tag_count = word_with_tag_counts[(word,tag)]
 				# Get the probability based on the number of times the word occurs with the tag
 				# divided by the number of times the tag occurs
 				word_prob_with_tag = word_with_tag_count/(tag_counts[tag]*1.0)
 				probabilities_of_word_given_tag[tag] = word_prob_with_tag
-			else:
-				pass
-				# The word and tag combination is unknown so we need smoothing???
-				# Taken care of in viterbi
 		observation_probabilities[word] = probabilities_of_word_given_tag
 
 
 def Viterbi(T,N):
 	'''
+	Runs the viterbi algorithm on T and N
 	T is a list of observations/length of sequence (words)
 	N is a list of of hidden states (tags)
 	'''
@@ -243,11 +239,9 @@ def WriteOutput(words,backtrace):
 	output_file = 'werthman-assgn4-out.txt'
 	f = open(output_file,'a')
 	for word, tag in zip(words,backtrace):
-		# if the word is a space or newline don't put a tag there
-		if word=='\n':
-			f.write('{0}'.format(word))
-		else:
-			f.write('{0}\t{1}\n'.format(word,tag))
+		f.write('{0}\t{1}\n'.format(word,tag))
+	# End of sequence
+	f.write('\n')
 	f.close()
 
 def main():
@@ -263,9 +257,10 @@ def main():
 	CalculateObservationProbability()
 
 	for word in observation_sequence:
-		sequence.append(word)
-		# If at the end of a sentence most of the time
-		if sequence[-1] == '\n' and sequence[-2] =='.':
+		if word != '\n':
+			sequence.append(word)
+		# Sequences are separated by newlines (\n)
+		else:
 			#backtrace.extend(Viterbi(sequence,tags))
 			backtrace = Viterbi(sequence,tags)
 			WriteOutput(sequence,backtrace)
