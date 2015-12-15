@@ -149,7 +149,7 @@ def CalculateObservationProbability():
 
 def Viterbi(T,N):
 	'''
-	Runs the viterbi algorithm on T and N
+	Runs the viterbi algorithm 
 	T is a list of observations/length of sequence (words)
 	N is a list of of hidden states (tags)
 	'''
@@ -165,12 +165,12 @@ def Viterbi(T,N):
 	# Initialization Step
 	# ---for each state s from 1 to N do---
 	for state in range(len(N)):
-		# Smoothing
 		# Check if we have seen the word with this tag in the training set
 		if T[0] in observation_probabilities and N[state] in observation_probabilities[T[0]]:
 			observation_prob = observation_probabilities[T[0]][N[state]]
 		else:
 			# If we have not seen this word or the word with this tag
+			# assign a really low probability to it
 			observation_prob = 1.0*(10**(-15))
 			#observation_prob = 0.0
 		# Arbitrarily assign 1.0 to transtion from 'start' to tag
@@ -197,6 +197,8 @@ def Viterbi(T,N):
 				if N[state] in transition_probabilities and N[previous_column_state] in transition_probabilities[N[state]]:
 					transition_prob = transition_probabilities[N[state]][N[previous_column_state]]
 				else:
+					# If we have not seen this transition in the training set
+					# assign a really low probability to it
 					transition_prob = 1.0*(10**(-15))
 					#transition_prob = 0.0
 				previous_column_transition_probs.append(transition_prob)
@@ -205,13 +207,16 @@ def Viterbi(T,N):
 			if T[observation] in observation_probabilities and N[state] in observation_probabilities[T[observation]]:
 				observation_prob = observation_probabilities[T[observation]][N[state]]
 			else:
-				# If we have not seen the word or the word with this tag in the training set
+				# If we have not seen this word or the word with this tag
+				# assign a really low probability to it
 				observation_prob = 1.0*(10**(-15))
 				#observation_prob = 0.0
 			# Find probability of the current state = previous_viterbi_prob*transition_prob*observation_prob
 			# In this case we use log so we do addition instead of multiplication
 			# ---viterbi[s,t]=max(viterbi[s0,t-1]*as0,s*bs(ot))---
-			previous_column_state_probs = [previous_prob+math.log(transition_prob)+math.log(observation_prob) for previous_prob,transition_prob in zip(previous_column_probs,previous_column_transition_probs)]
+			previous_column_state_probs = []
+			for previous_prob,transition_prob in zip(previous_column_probs,previous_column_transition_probs):
+				previous_column_state_probs.append(previous_prob+math.log(transition_prob)+math.log(observation_prob))
 			#previous_column_state_probs = [previous_prob*transition_prob*observation_prob for previous_prob,transition_prob in zip(previous_column_probs,previous_column_transition_probs)]
 			current_column_max = max(previous_column_state_probs)
 			viterbi_matrix[state][observation] = current_column_max
@@ -219,7 +224,7 @@ def Viterbi(T,N):
 			backpointer_matrix[state][observation] = current_column_max
 	# Termination Step
 	# Go back through the backpointer matrix and find the best tag for each observation/column/word
-	# This will give us the best tag/state sequence for the sequence that came in
+	# This will give us the best tag/state sequence for T
 	backtrace = []
 	# For each column/observation/word
 	for observation in range(0,len(T)):
@@ -240,7 +245,7 @@ def WriteOutput(words,backtrace):
 	f = open(output_file,'a')
 	for word, tag in zip(words,backtrace):
 		f.write('{0}\t{1}\n'.format(word,tag))
-	# End of sequence
+	# End of sequence so add the newline back
 	f.write('\n')
 	f.close()
 
